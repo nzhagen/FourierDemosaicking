@@ -24,7 +24,8 @@ if (binning > 1):
 (dcb,raw_img) = far.simulate_quadbayer_rawimg_from_dcb(filename, origin, binning, blurring, show=show_figures)
 fourier_recon_float = far.fourier_quadbayer_recon(raw_img, origin, show=show_figures)
 fourier_recon = far.truncate_rgb_float_to_uint8(fourier_recon_float)
-naive_recon = far.naive_quadbayer_recon(raw_img, origin, upsample=True)
+naive_recon_float = far.naive_quadbayer_recon(raw_img, origin, upsample=True)
+naive_recon = far.truncate_rgb_float_to_uint8(naive_recon_float)
 
 plt.figure('original_dcb')
 plt.imshow(dcb)

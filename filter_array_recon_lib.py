@@ -235,7 +235,7 @@ def naive_bayer_recon(raw_img, origin='G', upsample=False):
     ## far easier!)
 
     (Nx,Ny) = raw_img.shape
-    out = zeros((Nx//2,Ny//2,3), 'uint8')
+    out = zeros((Nx//2,Ny//2,3), raw_img.dtype)
     (Nx_out,Ny_out,_) = out.shape
 
     if (origin == 'G'):
@@ -259,7 +259,7 @@ def naive_bayer_recon(raw_img, origin='G', upsample=False):
         blue = blue[:Nx_out,:Ny_out]
 
     out[:,:,0] = red
-    out[:,:,1] = uint8((float32(green1) + float32(green2)) / 2.0)
+    out[:,:,1] = ((float32(green1) + float32(green2)) / 2.0).astype(raw_img.dtype)
     out[:,:,2] = blue
 
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
@@ -575,13 +575,13 @@ def naive_quadbayer_recon(raw_img, origin='G', upsample=False):
     ## (Which makes comparison with the original far easier!)
 
     (Nx,Ny) = raw_img.shape
-    out = zeros((Nx//2,Ny//2,3), 'uint8')
+    out = zeros((Nx//2,Ny//2,3), raw_img.dtype)
     (Nx_out,Ny_out,_) = out.shape
 
-    red = zeros((Nx_out,Ny_out), 'uint8')
-    green1 = zeros((Nx_out,Ny_out), 'uint8')
-    green2 = zeros((Nx_out,Ny_out), 'uint8')
-    blue = zeros((Nx_out,Ny_out), 'uint8')
+    red = zeros((Nx_out,Ny_out), raw_img.dtype)
+    green1 = zeros((Nx_out,Ny_out), raw_img.dtype)
+    green2 = zeros((Nx_out,Ny_out), raw_img.dtype)
+    blue = zeros((Nx_out,Ny_out), raw_img.dtype)
 
     if (origin == 'G'):
         red[0::2,0::2] = raw_img[2::4,0::4]
@@ -634,7 +634,7 @@ def naive_quadbayer_recon(raw_img, origin='G', upsample=False):
         blue = blue[:Nx_out,:Ny_out]
 
     out[:,:,0] = red
-    out[:,:,1] = uint8((float32(green1) + float32(green2)) / 2.0)
+    out[:,:,1] = ((float32(green1) + float32(green2)) / 2.0).astype(raw_img.dtype)
     out[:,:,2] = blue
 
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
