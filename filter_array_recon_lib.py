@@ -270,17 +270,18 @@ def naive_bayer_recon(raw_img, origin='G', upsample=False):
     return(out)
 
 ## ============================================================
-def generate_bayer_modulation_functions(m, n, origin='G', show=False):
+def generate_bayer_modulation_functions(Nx, Ny, origin='G', show=False):
     ## Generate the three sampling modulation functions for the Bayer color filter array.
+    (mm,nn) = indices((Nx,Ny))
 
     if (origin == 'R'):     ## red is at the origin pixel
-        mu_r = 0.25 * (1.0 + cos(pi * m)) * (1.0 + cos(pi * n))
-        mu_g = 0.5 * (1.0 - cos(pi * m) * cos(pi * n))
-        mu_b = 0.25 * (1.0 - cos(pi * m)) * (1.0 - cos(pi * n))
+        mu_r = 0.25 * (1.0 + cos(pi * mm)) * (1.0 + cos(pi * nn))
+        mu_g = 0.5 * (1.0 - cos(pi * mm) * cos(pi * nn))
+        mu_b = 0.25 * (1.0 - cos(pi * mm)) * (1.0 - cos(pi * nn))
     elif (origin == 'G'):   ## green is at the origin pixel
-        mu_r = 0.25 * (1.0 - cos(pi * m)) * (1.0 + cos(pi * n))
-        mu_g = 0.5 * (1.0 + cos(pi * m) * cos(pi * n))
-        mu_b = 0.25 * (1.0 + cos(pi * m)) * (1.0 - cos(pi * n))
+        mu_r = 0.25 * (1.0 - cos(pi * mm)) * (1.0 + cos(pi * nn))
+        mu_g = 0.5 * (1.0 + cos(pi * mm) * cos(pi * nn))
+        mu_b = 0.25 * (1.0 + cos(pi * mm)) * (1.0 - cos(pi * nn))
 
     if show:
         plt.figure('mu_r[:6,:6]')
@@ -738,7 +739,7 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
     return(recon)
 
 ## ============================================================
-def simulate_3mod_rawimg_from_dcb(filename, origin='G', binning=1, blurring=1, show=False):
+def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring=1, show=False):
     dcb = imread('./images/'+filename)[::-1,:,:]
     if (binning > 1):
         dcb = image_binning(dcb)

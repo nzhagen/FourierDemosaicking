@@ -7,14 +7,14 @@ import filter_array_recon_lib as far
 
 show_mod_figures = False
 show_fourier_figures = True
-use_binning = True
-apply_blurring = False
+binning = 1     ## '1' means no binning
+blurring = 1    ## '1' means no blurring
 origin = ['G', 'R'][0] ## G at (0,0), or R at (0,0)
 filename = ['autumn_tree.jpg', 'spectrum.png', 'PlatycryptusUndatusFemale.jpg'][2]
 img = imread('./images/'+filename)[::-1,:,:]
 
 ## Ensure that the image has dimensions with an even number of pixels.
-if use_binning:
+if (binning > 1):
     img = far.image_binning(img)
 img = far.evencrop(img)
 (Nx,Ny,_) = img.shape
@@ -25,7 +25,7 @@ plt.imshow(array(img))
 #zoombox = [880,1080,1430,1630]     ## PlatycryptusUndatusFemale.jpg
 #zoombox = [580,720,1220,1440]     ## PlatycryptusUndatusFemale.jpg
 zoombox = [880,1080,1280,1480]     ## PlatycryptusUndatusFemale.jpg
-if use_binning:
+if (binning > 1):
     zoombox = array(zoombox) // 2
 plt.plot([zoombox[2],zoombox[3],zoombox[3],zoombox[2],zoombox[2]], [zoombox[0],zoombox[0],zoombox[1],zoombox[1],zoombox[0]], '-', color=[0,1,0], lw=3)
 
@@ -33,11 +33,7 @@ plt.figure('img_zoom')
 plt.imshow(img[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:])
 plt.axis('off')
 
-if apply_blurring:
-    img = far.image_blur(img, 'gaussian', 1, show_image=True)
-
-(mm,nn) = indices((Nx,Ny))
-mu_funcs = far.generate_bayer_modulation_functions(mm, nn, origin, show=show_mod_figures)
+mu_funcs = far.generate_bayer_modulation_functions(Nx, Ny, origin, show=show_mod_figures)
 raw_img = far.generate_sampled_image_from_datacube(img, mu_funcs, zoom_region=zoombox, show=True)
 fourier_recon = far.fourier_bayer_recon(raw_img, show=show_fourier_figures)
 naive_recon = far.naive_bayer_recon(raw_img, origin=origin, upsample=True)

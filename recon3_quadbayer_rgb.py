@@ -21,7 +21,7 @@ zoombox = [880,1080,1280,1480]     ## PlatycryptusUndatusFemale.jpg
 if (binning > 1):
     zoombox = array(zoombox) // binning
 
-(dcb,raw_img) = far.simulate_3mod_rawimg_from_dcb(filename, origin, binning, blurring, show=show_figures)
+(dcb,raw_img) = far.simulate_quadbayer_rawimg_from_dcb(filename, origin, binning, blurring, show=show_figures)
 fourier_recon = far.fourier_quadbayer_recon(raw_img, origin, show=show_figures)
 naive_recon = far.naive_quadbayer_recon(raw_img, origin, upsample=True)
 
