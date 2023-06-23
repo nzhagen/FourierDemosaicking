@@ -531,10 +531,10 @@ def draw_quadbayer_fft_circles(Nx, Ny, normalize=False):
     y9 = cen9[0] + radius * sin(thetas)
 
     plt.plot(x1, y1, 'k-', lw=3)
-    plt.plot(x2, y2, 'r-', lw=3)
-    plt.plot(x3, y3, 'r-', lw=3)
-    plt.plot(x4, y4, 'b-', lw=3)
-    plt.plot(x5, y5, 'b-', lw=3)
+    plt.plot(x2, y2, 'b-', lw=3)
+    plt.plot(x3, y3, 'b-', lw=3)
+    plt.plot(x4, y4, 'r-', lw=3)
+    plt.plot(x5, y5, 'r-', lw=3)
     plt.plot(x6, y6, 'g-', lw=3)
     plt.plot(x7, y7, 'g-', lw=3)
     plt.plot(x8, y8, 'g-', lw=3)
@@ -544,6 +544,8 @@ def draw_quadbayer_fft_circles(Nx, Ny, normalize=False):
 
 ## ============================================================
 def generate_quadbayer_modulation_functions(mm, nn, origin='G', show=False):
+    (Nx,Ny) = mm.shape
+
     mu_x = sqrt(2.0) * cos(0.25 * pi * (2.0*mm - 1.0))
     mu_y = sqrt(2.0) * cos(0.25 * pi * (2.0*nn - 1.0))
 
