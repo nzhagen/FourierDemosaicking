@@ -581,3 +581,156 @@ def generate_quadbayer_modulation_functions(mm, nn, origin='G', show=False):
 
     return(mu_r, mu_g, mu_b)
 
+## ============================================================
+def naive_quadbayer_recon(raw_img, origin='G', upsample=False):
+    ## From a Bayer-sampled raw image, map every other 2x2 superpixel into the output registered color image
+    ## (i.e. datacube). This will produce an image that is half the size of the original. However, if choosing
+    ## "upsample=True", then the algorithm is followed by a 2x upsampling step to recover the original image size.
+    ## (Which makes comparison with the original far easier!)
+
+    (Nx,Ny) = raw_img.shape
+    out = zeros((Nx//2,Ny//2,3), 'uint8')
+    (Nx_out,Ny_out,_) = out.shape
+
+    red = zeros((Nx_out,Ny_out), 'uint8')
+    green1 = zeros((Nx_out,Ny_out), 'uint8')
+    green2 = zeros((Nx_out,Ny_out), 'uint8')
+    blue = zeros((Nx_out,Ny_out), 'uint8')
+
+    if (origin == 'G'):
+        red[0::2,0::2] = raw_img[2::4,0::4]
+        red[1::2,0::2] = raw_img[3::4,0::4]
+        red[0::2,1::2] = raw_img[2::4,1::4]
+        red[1::2,1::2] = raw_img[3::4,1::4]
+
+        green1[0::2,0::2] = raw_img[0::4,0::4]
+        green1[1::2,0::2] = raw_img[1::4,0::4]
+        green1[0::2,1::2] = raw_img[0::4,1::4]
+        green1[1::2,1::2] = raw_img[1::4,1::4]
+
+        green2[0::2,0::2] = raw_img[2::4,2::4]
+        green2[1::2,0::2] = raw_img[3::4,2::4]
+        green2[0::2,1::2] = raw_img[2::4,3::4]
+        green2[1::2,1::2] = raw_img[3::4,3::4]
+
+        blue[0::2,0::2] = raw_img[0::4,2::4]
+        blue[1::2,0::2] = raw_img[1::4,2::4]
+        blue[0::2,1::2] = raw_img[0::4,3::4]
+        blue[1::2,1::2] = raw_img[1::4,3::4]
+    elif (origin == 'R'):
+        red[0::2,0::2] = raw_img[0::4,0::4]
+        red[1::2,0::2] = raw_img[1::4,0::4]
+        red[0::2,1::2] = raw_img[0::4,1::4]
+        red[1::2,1::2] = raw_img[1::4,1::4]
+
+        green1[0::2,0::2] = raw_img[2::4,0::4]
+        green1[1::2,0::2] = raw_img[3::4,0::4]
+        green1[0::2,1::2] = raw_img[2::4,1::4]
+        green1[1::2,1::2] = raw_img[3::4,1::4]
+
+        green2[0::2,0::2] = raw_img[0::4,2::4]
+        green2[1::2,0::2] = raw_img[1::4,2::4]
+        green2[0::2,1::2] = raw_img[0::4,3::4]
+        green2[1::2,1::2] = raw_img[1::4,3::4]
+
+        blue[0::2,0::2] = raw_img[2::4,2::4]
+        blue[1::2,0::2] = raw_img[3::4,2::4]
+        blue[0::2,1::2] = raw_img[2::4,3::4]
+        blue[1::2,1::2] = raw_img[3::4,3::4]
+
+    if (red.shape != out.shape):
+        red = red[:Nx_out,:Ny_out]
+    if (green1.shape != out.shape):
+        green1 = green1[:Nx_out,:Ny_out]
+    if (green2.shape != out.shape):
+        green2 = green2[:Nx_out,:Ny_out]
+    if (blue.shape != out.shape):
+        blue = blue[:Nx_out,:Ny_out]
+
+    out[:,:,0] = red
+    out[:,:,1] = uint8((float32(green1) + float32(green2)) / 2.0)
+    out[:,:,2] = blue
+
+    ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
+    ## If we then upsample by a factor of two, then we can recover the original image size.
+    if upsample:
+        out = far.zoom(out, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+
+    return(out)
+
+## ============================================================
+def fourier_quadbayer_recon(raw_img, origin='G', show=False):
+    ## Use the Fourier shift-and-mask approach to reconstructing the Bayer-sampled image.
+    fft_img = fftshift(fft2(meas_img))
+
+    mask = zeros((Nx,Ny), 'bool')
+    mask[Px-(Mx//2):Px+(Mx//2), Py-(My//2):Py+(My//2)] = True
+
+    c00 = real(ifft2(ifftshift(fft_img * mask)))
+    c10 = real(ifft2(ifftshift(roll(fft_img/(1+1j), Mx, axis=0) * mask)))
+    c01 = real(ifft2(ifftshift(roll(fft_img/(1+1j), My, axis=1) * mask)))
+    c11 = imag(ifft2(ifftshift(roll(roll(fft_img, My, axis=1), Mx, axis=0) * mask)))
+
+    if (origin == 'R'):     ## red at (0,0)
+        G = c00 - 2*c11
+        R = c00 + 2*c11 + 2*c10 + 2*c01
+        B = c00 + 2*c11 - 2*c10 - 2*c01
+    elif (origin == 'G'):   ## green at (0,0)
+        G = c00 + 2*c11
+        R = c00 - 2*c11 - 2*c10 + 2*c01
+        B = c00 - 2*c11 + 2*c10 - 2*c01
+
+    recon = far.truncate_rgb_floatimage_to_uint8(R,G,B)
+
+    if show:
+        f2abs = log(abs(fft_img))
+
+        plt.figure('log(abs(fft_img))')
+        plt.imshow(f2abs, extent=[-1,1,-1,1], aspect='auto')
+        plt.xlabel('x-axis frequencies (Nyquist units)')
+        plt.ylabel('y-axis frequencies (Nyquist units)')
+        plt.xticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
+        plt.yticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
+        plt.colorbar()
+
+        ## The lines showing where the cross-sections are taken from.
+        plt.plot([-1.0,1.0], [0.0,0.0], 'r--')
+        plt.plot([0.0,0.0], [-1.0,1.0], 'b--')
+        plt.plot([-1.0,1.0], [-1.0,1.0], 'g--')
+
+        far.draw_quadbayer_fft_circles(Nx, Ny, normalize=True)
+
+        ## Get the pixels along the image diagonal, so we can take a diagonal cross-section.
+        (mm,nn) = indices((Nx,Ny))
+        r = sqrt((mm-(Nx/2))**2 + (nn-(Ny/2))**2)
+        diagonal_line_mask = (mm == uint(nn * Nx / Ny))
+        Ndiag = sum(diagonal_line_mask)
+        diag_dist = r[diagonal_line_mask]
+        diag_dist[arange(Ndiag) < (Ndiag/2)] *= -1.0
+
+        #plt.figure('log(abs(c00))')
+        #plt.imshow(log(abs(fft_img)))
+        #plt.colorbar()
+
+        #plt.figure('log(abs(c01))')
+        #plt.imshow(log(abs(roll(fft_img, -Mx, axis=0))))
+        #plt.colorbar()
+
+        #plt.figure('log(abs(c10))')
+        #plt.imshow(log(abs(roll(fft_img, -My, axis=1))))
+        #plt.colorbar()
+
+        plt.figure('log(abs(fft_img))_cross-section')
+        plt.plot(arange(Ny)-(Ny/2), f2abs[Nx//2,:], alpha=0.75, label='horiz slice')
+        plt.plot(arange(Nx)-(Nx/2), f2abs[:,Ny//2], alpha=0.75, label='vert slice')
+        plt.plot(diag_dist, f2abs[diagonal_line_mask], alpha=0.75, label='diag slice')
+        plt.xlabel('pixel distance along frequency axis')
+        plt.ylabel('Fourier domain absolute value (log scale)')
+        plt.legend()
+
+        plt.figure('mask')
+        plt.imshow(mask)
+        plt.colorbar()
+
+    return(recon)
+
