@@ -543,9 +543,8 @@ def draw_quadbayer_fft_circles(Nx, Ny, normalize=False):
     return
 
 ## ============================================================
-def generate_quadbayer_modulation_functions(mm, nn, origin='G', show=False):
-    (Nx,Ny) = mm.shape
-
+def generate_quadbayer_modulation_functions(Nx, Ny, origin='G', show=False):
+    (mm,nn) = indices((Nx,Ny))
     mu_x = sqrt(2.0) * cos(0.25 * pi * (2.0*mm - 1.0))
     mu_y = sqrt(2.0) * cos(0.25 * pi * (2.0*nn - 1.0))
 
@@ -739,12 +738,16 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
     return(recon)
 
 ## ============================================================
-def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring=1, show=False):
+def simulate_3mod_rawimg_from_dcb(filename, origin='G', binning=1, blurring=1, show=False):
     dcb = imread('./images/'+filename)[::-1,:,:]
-
     if (binning > 1):
         dcb = image_binning(dcb)
-    dcb = far.evencrop(dcb)
+
+    ## Make sure that the image size is an even factor of two, for ease of sampling.
+    dcb = evencrop(dcb)
+
+    if blurring > 1:
+        dcb = image_blur(dcb, 'gaussian', blurring, show_image=show)
 
     (Nx,Ny,_) = dcb.shape
     (Px,Py) = (Nx//2, Ny//2)
@@ -755,12 +758,7 @@ def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring
         plt.figure('original_dcb')
         plt.imshow(dcb)
 
-    if blurring > 1:
-        dcb = far.image_blur(dcb, 'gaussian', blurring, show_image=show)
-
-    (mm,nn) = indices((Nx,Ny))
-    (mu_r, mu_g, mu_b) = far.generate_quadbayer_modulation_functions(mm, nn, origin=origin, show=show)
-
+    (mu_r, mu_g, mu_b) = generate_quadbayer_modulation_functions(Nx, Ny, origin=origin, show=show)
     raw_img = (dcb[:,:,0] * mu_r) + (dcb[:,:,1] * mu_g) + (dcb[:,:,2] * mu_b)
 
     if show:
