@@ -2,8 +2,6 @@ from numpy import *
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from imageio import imread
-from scipy.fft import fft2, ifft2, fftshift, ifftshift, fftfreq
-from scipy.ndimage import gaussian_filter, uniform_filter
 import filter_array_recon_lib as far
 
 ## ============================================================

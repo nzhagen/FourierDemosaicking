@@ -654,14 +654,18 @@ def naive_quadbayer_recon(raw_img, origin='G', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        out = far.zoom(out, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        out = zoom(out, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
 
     return(out)
 
 ## ============================================================
 def fourier_quadbayer_recon(raw_img, origin='G', show=False):
     ## Use the Fourier shift-and-mask approach to reconstructing the Bayer-sampled image.
-    fft_img = fftshift(fft2(meas_img))
+    fft_img = fftshift(fft2(raw_img))
+
+    (Nx,Ny) = raw_img.shape
+    (Px,Py) = (Nx//2, Ny//2)
+    (Mx,My) = (Px//2, Py//2)
 
     mask = zeros((Nx,Ny), 'bool')
     mask[Px-(Mx//2):Px+(Mx//2), Py-(My//2):Py+(My//2)] = True
@@ -680,7 +684,7 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
         R = c00 - 2*c11 - 2*c10 + 2*c01
         B = c00 - 2*c11 + 2*c10 - 2*c01
 
-    recon = far.truncate_rgb_floatimage_to_uint8(R,G,B)
+    recon = truncate_rgb_floatimage_to_uint8(R,G,B)
 
     if show:
         f2abs = log(abs(fft_img))
@@ -698,7 +702,7 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
         plt.plot([0.0,0.0], [-1.0,1.0], 'b--')
         plt.plot([-1.0,1.0], [-1.0,1.0], 'g--')
 
-        far.draw_quadbayer_fft_circles(Nx, Ny, normalize=True)
+        draw_quadbayer_fft_circles(Nx, Ny, normalize=True)
 
         ## Get the pixels along the image diagonal, so we can take a diagonal cross-section.
         (mm,nn) = indices((Nx,Ny))
