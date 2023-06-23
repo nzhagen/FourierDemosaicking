@@ -228,7 +228,7 @@ def augment_img_colordiff(img1, img2):
     return(uint8(diff))
 
 ## ============================================================
-def naive_bayer_recon(raw_img, origin='green', upsample=False):
+def naive_bayer_recon(raw_img, origin='G', upsample=False):
     ## From a Bayer-sampled raw image, map every other pixel into the output registered color image (i.e. datacube).
     ## This will produce an image that is half the size of the original. However, if choosing "upsample=True", then
     ## the algorithm is followed by a 2x upsampling step to recover the original image size. (Which makes comparison
@@ -238,12 +238,12 @@ def naive_bayer_recon(raw_img, origin='green', upsample=False):
     out = zeros((Nx//2,Ny//2,3), 'uint8')
     (Nx_out,Ny_out,_) = out.shape
 
-    if (origin == 'green'):
+    if (origin == 'G'):
         red = raw_img[1::2,0::2]
         green1 = raw_img[0::2,0::2]
         green2 = raw_img[1::2,1::2]
         blue = raw_img[0::2,1::2]
-    elif (origin == 'red'):
+    elif (origin == 'R'):
         red = raw_img[0::2,0::2]
         green1 = raw_img[0::2,1::2]
         green2 = raw_img[1::2,0::2]
@@ -270,14 +270,14 @@ def naive_bayer_recon(raw_img, origin='green', upsample=False):
     return(out)
 
 ## ============================================================
-def generate_bayer_modulation_functions(m, n, origin='green', show=False):
+def generate_bayer_modulation_functions(m, n, origin='G', show=False):
     ## Generate the three sampling modulation functions for the Bayer color filter array.
 
-    if (origin == 'red'):     ## red is at the origin pixel
+    if (origin == 'R'):     ## red is at the origin pixel
         mu_r = 0.25 * (1.0 + cos(pi * m)) * (1.0 + cos(pi * n))
         mu_g = 0.5 * (1.0 - cos(pi * m) * cos(pi * n))
         mu_b = 0.25 * (1.0 - cos(pi * m)) * (1.0 - cos(pi * n))
-    elif (origin == 'green'):   ## green is at the origin pixel
+    elif (origin == 'G'):   ## green is at the origin pixel
         mu_r = 0.25 * (1.0 - cos(pi * m)) * (1.0 + cos(pi * n))
         mu_g = 0.5 * (1.0 + cos(pi * m) * cos(pi * n))
         mu_b = 0.25 * (1.0 + cos(pi * m)) * (1.0 - cos(pi * n))
@@ -342,7 +342,7 @@ def generate_sampled_image_from_datacube(dcb, sampling_functions, zoom_region=No
     return(uint8(sampled_img))
 
 ## ============================================================
-def fourier_bayer_recon(raw_img, origin='green', show=False):
+def fourier_bayer_recon(raw_img, origin='G', show=False):
     ## Use the Fourier shift-and-mask approach to reconstructing the Bayer-sampled image.
 
     fft_img = fftshift(fft2(raw_img))
@@ -355,6 +355,37 @@ def fourier_bayer_recon(raw_img, origin='green', show=False):
     (Mx,My) = (Px//2, Py//2)
     print(f'(Nx,Ny) = ({Nx},{Ny}),  (Px,Py) = ({Px},{Py}),  (Mx,My) = ({Mx},{My})')
     mask[Px-Mx:Px+Mx, Py-My:Py+My] = True
+
+    ## Here is the Fourier reconstruction code. We shift the Fourier-domain image, mask it, then inverse transform.
+    ## Finally, we combine the channels to reconstruct individual color channels from the luminance and chrominance
+    ## images.
+    c00 = real(ifft2(ifftshift(fft_img * mask)))
+    c01 = real(ifft2(ifftshift(roll(fft_img, -Px, axis=0) * mask)))
+    c10 = real(ifft2(ifftshift(roll(fft_img, -Py, axis=1) * mask)))
+    c11 = real(ifft2(ifftshift(roll(roll(fft_img, -Py, axis=1), -Px, axis=0) * mask)))
+
+    if (origin == 'R'):     ## red at (0,0)
+        G = c00 - c11
+        R = c00 + c11 + 2.0 * c01
+        B = c00 + c11 - 2.0 * c10
+    elif (origin == 'G'):   ## green at (0,0)
+        G = c00 + c11
+        R = c00 - c11 - 2.0 * c01
+        B = c00 - c11 - 2.0 * c10
+
+    ## Clean up some small errors that can cause problems with the final 8-bit conversion.
+    R[R < 0] = 0
+    R[R > 255] = 255
+    G[G < 0] = 0
+    G[G > 255] = 255
+    B[B < 0] = 0
+    B[B > 255] = 255
+
+    ## Finally, insert the three color planes into a single integrated color image (i.e. "datacube").
+    fourier_recon = zeros((Nx,Ny,3), 'uint8')
+    fourier_recon[:,:,0] = uint8(R)
+    fourier_recon[:,:,1] = uint8(G)
+    fourier_recon[:,:,2] = uint8(B)
 
     if show:
         f2abs = log(abs(fft_img))
@@ -394,37 +425,6 @@ def fourier_bayer_recon(raw_img, origin='green', show=False):
         plt.imshow(mask)
         plt.colorbar()
 
-    ## Here is the Fourier reconstruction code. We shift the Fourier-domain image, mask it, then inverse transform.
-    ## Finally, we combine the channels to reconstruct individual color channels from the luminance and chrominance
-    ## images.
-    c00 = real(ifft2(ifftshift(fft_img * mask)))
-    c01 = real(ifft2(ifftshift(roll(fft_img, -Px, axis=0) * mask)))
-    c10 = real(ifft2(ifftshift(roll(fft_img, -Py, axis=1) * mask)))
-    c11 = real(ifft2(ifftshift(roll(roll(fft_img, -Py, axis=1), -Px, axis=0) * mask)))
-
-    if (origin == 'red'):     ## red at (0,0)
-        G = c00 - c11
-        R = c00 + c11 + 2.0 * c01
-        B = c00 + c11 - 2.0 * c10
-    elif (origin == 'green'):   ## green at (0,0)
-        G = c00 + c11
-        R = c00 - c11 - 2.0 * c01
-        B = c00 - c11 - 2.0 * c10
-
-    ## Clean up some small errors that can cause problems with the final 8-bit conversion.
-    R[R < 0] = 0
-    R[R > 255] = 255
-    G[G < 0] = 0
-    G[G > 255] = 255
-    B[B < 0] = 0
-    B[B > 255] = 255
-
-    ## Finally, insert the three color planes into a single integrated color image (i.e. "datacube").
-    fourier_recon = zeros((Nx,Ny,3), 'uint8')
-    fourier_recon[:,:,0] = uint8(R)
-    fourier_recon[:,:,1] = uint8(G)
-    fourier_recon[:,:,2] = uint8(B)
-
     return(fourier_recon)
 
 ## ===============================================================================================
@@ -459,7 +459,7 @@ def read_sony_image(filename):
     return(img)
 
 ## ============================================================
-def truncate_rgb_floatimage_to_uint8image(R_floatimg, G_floatimg, B_floatimg):
+def truncate_rgb_floatimage_to_uint8(R_floatimg, G_floatimg, B_floatimg):
     (Nx,Ny) = R_floatimg.shape
     rgb_img = zeros((Nx,Ny,3), 'float32')
     rgb_img[:,:,0] = R_floatimg
@@ -471,4 +471,111 @@ def truncate_rgb_floatimage_to_uint8image(R_floatimg, G_floatimg, B_floatimg):
     rgb_img = uint8(rgb_img)
 
     return(rgb_img)
+
+## ============================================================
+def draw_quadbayer_fft_circles(Nx, Ny, normalize=False):
+    (Px,Py) = (Nx//2, Ny//2)
+    (Mx,My) = (Px//2, Py//2)
+
+    if normalize:
+        ## Plot the circles in a frequency domain of Nyquist units
+        radius = 0.25
+        cen1 = ( 0, 0)
+        cen2 = ( 0.5, 0)
+        cen3 = (-0.5, 0)
+        cen4 = ( 0,-0.5)
+        cen5 = ( 0, 0.5)
+        cen6 = ( 0.5, 0.5)
+        cen7 = (-0.5,-0.5)
+        cen8 = (-0.5, 0.5)
+        cen9 = ( 0.5,-0.5)
+    else:
+        ## Plot the circles in a frequency domain of inverse pixel units
+        radius = (Px-Mx) / 2.0
+        cen1 = ((Nx-1)/2.0, (Ny-1)/2.0) / 2.0
+        cen2 = (Nx-1, (Ny-1)/2.0) / 2.0
+        cen3 = (0.0, (Ny-1)/2.0) / 2.0
+        cen4 = ((Nx-1)/2.0, 0.0) / 2.0
+        cen5 = ((Nx-1)/2.0, (Ny-1)) / 2.0
+        cen6 = ((Nx-1), (Ny-1)) / 2.0
+        cen7 = (0.0, 0.0)
+        cen8 = (0.0, (Ny-1)) / 2.0
+        cen9 = ((Nx-1), 0.0) / 2.0
+
+    thetas = linspace(0.0, 2.0*pi, 200)
+    x1 = cen1[1] + radius * cos(thetas)
+    y1 = cen1[0] + radius * sin(thetas)
+
+    x2 = cen2[1] + radius * cos(thetas)
+    y2 = cen2[0] + radius * sin(thetas)
+
+    x3 = cen3[1] + radius * cos(thetas)
+    y3 = cen3[0] + radius * sin(thetas)
+
+    x4 = cen4[1] + radius * cos(thetas)
+    y4 = cen4[0] + radius * sin(thetas)
+
+    x5 = cen5[1] + radius * cos(thetas)
+    y5 = cen5[0] + radius * sin(thetas)
+
+    x6 = cen6[1] + radius * cos(thetas)
+    y6 = cen6[0] + radius * sin(thetas)
+
+    x7 = cen7[1] + radius * cos(thetas)
+    y7 = cen7[0] + radius * sin(thetas)
+
+    x8 = cen8[1] + radius * cos(thetas)
+    y8 = cen8[0] + radius * sin(thetas)
+
+    x9 = cen9[1] + radius * cos(thetas)
+    y9 = cen9[0] + radius * sin(thetas)
+
+    plt.plot(x1, y1, 'k-', lw=3)
+    plt.plot(x2, y2, 'r-', lw=3)
+    plt.plot(x3, y3, 'r-', lw=3)
+    plt.plot(x4, y4, 'b-', lw=3)
+    plt.plot(x5, y5, 'b-', lw=3)
+    plt.plot(x6, y6, 'g-', lw=3)
+    plt.plot(x7, y7, 'g-', lw=3)
+    plt.plot(x8, y8, 'g-', lw=3)
+    plt.plot(x9, y9, 'g-', lw=3)
+
+    return
+
+## ============================================================
+def generate_quadbayer_modulation_functions(mm, nn, origin='G', show=False):
+    mu_x = sqrt(2.0) * cos(0.25 * pi * (2.0*mm - 1.0))
+    mu_y = sqrt(2.0) * cos(0.25 * pi * (2.0*nn - 1.0))
+
+    if (origin == 'R'):
+        mu_g = 0.5 - 0.5 * mu_x * mu_y
+        mu_r = 0.25 * (1.0 + mu_x) * (1.0 + mu_y)
+        mu_b = 0.25 * (1.0 - mu_x) * (1.0 - mu_y)
+    elif (origin == 'G'):
+        mu_g = 0.5 + 0.5 * mu_x * mu_y
+        mu_r = 0.25 * (1.0 - mu_x) * (1.0 + mu_y)
+        mu_b = 0.25 * (1.0 + mu_x) * (1.0 - mu_y)
+
+    if show:
+        plt.figure('mu_r')
+        plt.imshow(mu_r[:16,:16])
+        plt.colorbar()
+
+        plt.figure('mu_g')
+        plt.imshow(mu_g[:16,:16])
+        plt.colorbar()
+
+        plt.figure('mu_b')
+        plt.imshow(mu_b[:16,:16])
+        plt.colorbar()
+
+        mu_all = zeros((Nx,Ny,3), 'uint8')
+        mu_all[abs(mu_r - 1.0) < 0.1, 0] = 255
+        mu_all[abs(mu_g - 1.0) < 0.1, 1] = 255
+        mu_all[abs(mu_b - 1.0) < 0.1, 2] = 255
+
+        plt.figure('all_color_mod')
+        plt.imshow(mu_all[:16,:16])
+
+    return(mu_r, mu_g, mu_b)
 
