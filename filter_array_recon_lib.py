@@ -738,3 +738,39 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
 
     return(recon)
 
+## ============================================================
+def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring=1, show=False):
+    dcb = imread('./images/'+filename)[::-1,:,:]
+
+    if (binning > 1):
+        dcb = image_binning(dcb)
+    dcb = far.evencrop(dcb)
+
+    (Nx,Ny,_) = dcb.shape
+    (Px,Py) = (Nx//2, Ny//2)
+    (Mx,My) = (Px//2, Py//2)  ## mask size
+    #print(f'(Nx,Ny)=({Nx},{Ny}), (Px,Py)=({Px},{Py}), (Mx,My)=({Mx},{My})')
+
+    if show:
+        plt.figure('original_dcb')
+        plt.imshow(dcb)
+
+    if blurring > 1:
+        dcb = far.image_blur(dcb, 'gaussian', blurring, show_image=show)
+
+    (mm,nn) = indices((Nx,Ny))
+    (mu_r, mu_g, mu_b) = far.generate_quadbayer_modulation_functions(mm, nn, origin=origin, show=show)
+
+    raw_img = (dcb[:,:,0] * mu_r) + (dcb[:,:,1] * mu_g) + (dcb[:,:,2] * mu_b)
+
+    if show:
+        raw_img_rgb = zeros_like(dcb)
+        raw_img_rgb[:,:,0] = dcb[:,:,0] * mu_r
+        raw_img_rgb[:,:,1] = dcb[:,:,1] * mu_g
+        raw_img_rgb[:,:,2] = dcb[:,:,2] * mu_b
+
+        plt.figure('raw_sampled_img_colorized')
+        plt.imshow(raw_img_rgb)
+
+    return(dcb, raw_img)
+
