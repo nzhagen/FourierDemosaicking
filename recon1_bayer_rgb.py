@@ -42,7 +42,7 @@ if apply_blurring:
 
 (mm,nn) = indices((Nx,Ny))
 mu_funcs = far.generate_bayer_modulation_functions(mm, nn, origin='green', show=show_mod_figures)
-raw_img = far.generate_bayer_sampled_image_from_datacube(img, mu_funcs, zoom_region=zoombox, show=True)
+raw_img = far.generate_sampled_image_from_datacube(img, mu_funcs, zoom_region=zoombox, show=True)
 fourier_recon = far.fourier_bayer_recon(raw_img, show=show_fourier_figures)
 naive_recon = far.naive_bayer_recon(raw_img, origin=origin, upsample=True)
 

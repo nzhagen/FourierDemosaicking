@@ -309,7 +309,7 @@ def generate_bayer_modulation_functions(m, n, origin='green', show=False):
     return(mu_r, mu_g, mu_b)
 
 ## ============================================================
-def generate_bayer_sampled_image_from_datacube(dcb, sampling_functions, zoom_region=None, show=False):
+def generate_sampled_image_from_datacube(dcb, sampling_functions, zoom_region=None, show=False):
     ## Given an input registered color image (i.e. a datacube), sample each color plane of the input to simulate
     ## a Bayer-filter-sampled raw image.
 
@@ -457,4 +457,18 @@ def read_sony_image(filename):
         print('nsat=', nsat)
 
     return(img)
+
+## ============================================================
+def truncate_rgb_floatimage_to_uint8image(R_floatimg, G_floatimg, B_floatimg):
+    (Nx,Ny) = R_floatimg.shape
+    rgb_img = zeros((Nx,Ny,3), 'float32')
+    rgb_img[:,:,0] = R_floatimg
+    rgb_img[:,:,1] = G_floatimg
+    rgb_img[:,:,2] = B_floatimg
+
+    rgb_img[rgb_img > 255.0] = 255.0
+    rgb_img[rgb_img < 0.0] = 0.0
+    rgb_img = uint8(rgb_img)
+
+    return(rgb_img)
 
