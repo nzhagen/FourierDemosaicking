@@ -374,19 +374,11 @@ def fourier_bayer_recon(raw_img, origin='G', show=False):
         R = c00 - c11 - 2.0 * c01
         B = c00 - c11 - 2.0 * c10
 
-    ## Clean up some small errors that can cause problems with the final 8-bit conversion.
-    R[R < 0] = 0
-    R[R > 255] = 255
-    G[G < 0] = 0
-    G[G > 255] = 255
-    B[B < 0] = 0
-    B[B > 255] = 255
-
     ## Finally, insert the three color planes into a single integrated color image (i.e. "datacube").
-    fourier_recon = zeros((Nx,Ny,3), 'uint8')
-    fourier_recon[:,:,0] = uint8(R)
-    fourier_recon[:,:,1] = uint8(G)
-    fourier_recon[:,:,2] = uint8(B)
+    out = zeros((Nx,Ny,3), 'float32')
+    out[:,:,0] = R
+    out[:,:,1] = G
+    out[:,:,2] = B
 
     if show:
         f2abs = log(abs(fft_img))
@@ -426,7 +418,7 @@ def fourier_bayer_recon(raw_img, origin='G', show=False):
         plt.imshow(mask)
         plt.colorbar()
 
-    return(fourier_recon)
+    return(out)
 
 ## ===============================================================================================
 def read_sony_image(filename):
@@ -460,17 +452,11 @@ def read_sony_image(filename):
     return(img)
 
 ## ============================================================
-def truncate_rgb_floatimage_to_uint8(R_floatimg, G_floatimg, B_floatimg):
-    (Nx,Ny) = R_floatimg.shape
-    rgb_img = zeros((Nx,Ny,3), 'float32')
-    rgb_img[:,:,0] = R_floatimg
-    rgb_img[:,:,1] = G_floatimg
-    rgb_img[:,:,2] = B_floatimg
-
+def truncate_rgb_float_to_uint8(floatimg):
+    rgb_img = array(floatimg)
     rgb_img[rgb_img > 255.0] = 255.0
     rgb_img[rgb_img < 0.0] = 0.0
     rgb_img = uint8(rgb_img)
-
     return(rgb_img)
 
 ## ============================================================
@@ -684,7 +670,10 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
         R = c00 - 2*c11 - 2*c10 + 2*c01
         B = c00 - 2*c11 + 2*c10 - 2*c01
 
-    recon = truncate_rgb_floatimage_to_uint8(R,G,B)
+    out = zeros((Nx,Ny,3), 'float32')
+    out[:,:,0] = R
+    out[:,:,1] = G
+    out[:,:,2] = B
 
     if show:
         f2abs = log(abs(fft_img))
@@ -736,7 +725,7 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
         plt.imshow(mask)
         plt.colorbar()
 
-    return(recon)
+    return(out)
 
 ## ============================================================
 def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring=1, show=False):

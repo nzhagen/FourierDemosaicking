@@ -35,7 +35,8 @@ plt.axis('off')
 
 mu_funcs = far.generate_bayer_modulation_functions(Nx, Ny, origin, show=show_mod_figures)
 raw_img = far.generate_sampled_image_from_datacube(img, mu_funcs, zoom_region=zoombox, show=True)
-fourier_recon = far.fourier_bayer_recon(raw_img, show=show_fourier_figures)
+fourier_recon_float = far.fourier_bayer_recon(raw_img, show=show_fourier_figures)
+fourier_recon = far.truncate_rgb_float_to_uint8(fourier_recon_float)
 naive_recon = far.naive_bayer_recon(raw_img, origin=origin, upsample=True)
 
 img_zoom = img[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
