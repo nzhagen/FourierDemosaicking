@@ -1,11 +1,8 @@
 from numpy import *
 import matplotlib.pyplot as plt
 from imageio import imread
-from glob import glob
-from numpy.fft import fft2, ifft2, fftshift, ifftshift, fftfreq
 import matplotlib.gridspec as gridspec
 import filter_array_recon_lib as far
-import struct
 
 ## Use image origin at bottom left.
 import matplotlib as mpl
