@@ -15,6 +15,15 @@ def iseven(x):
 def isodd(x):
     return (x % 2 != 0)
 
+## ===============================================================================================
+def is_number(s):
+    ## Check if a string represents a number --- any number.
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
 ## ============================================================
 def image_binning(img):
     ## We average (rather than sum) the binned output in order to keep to 8-bit data type.
@@ -303,9 +312,6 @@ def generate_bayer_modulation_functions(Nx, Ny, origin='G', show=False):
 
         plt.figure('mu_all[:6,:6]')
         plt.imshow(mu_all[:6,:6])
-        plt.colorbar()
-        plt.xlabel('x-pixel number')
-        plt.ylabel('y-pixel number')
 
     return(mu_r, mu_g, mu_b)
 
@@ -714,9 +720,9 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
         #plt.colorbar()
 
         plt.figure('log(abs(fft_img))_cross-section')
-        plt.plot(arange(Ny)-(Ny/2), f2abs[Nx//2,:], alpha=0.75, label='horiz slice')
-        plt.plot(arange(Nx)-(Nx/2), f2abs[:,Ny//2], alpha=0.75, label='vert slice')
-        plt.plot(diag_dist, f2abs[diagonal_line_mask], alpha=0.75, label='diag slice')
+        plt.plot(arange(Ny)-(Ny/2), f2abs[Nx//2,:], 'r-', alpha=0.75, label='horiz slice')
+        plt.plot(arange(Nx)-(Nx/2), f2abs[:,Ny//2], 'b-', alpha=0.75, label='vert slice')
+        plt.plot(diag_dist, f2abs[diagonal_line_mask], 'g-', alpha=0.75, label='diag slice')
         plt.xlabel('pixel distance along frequency axis')
         plt.ylabel('Fourier domain absolute value (log scale)')
         plt.legend()
@@ -729,7 +735,7 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
 
 ## ============================================================
 def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring=1, show=False):
-    dcb = imread('./images/'+filename)[::-1,:,:]
+    dcb = imread('./images/'+filename)[::-1,:,:]    ## flip images to match to image origin='lower'
     if (binning > 1):
         dcb = image_binning(dcb)
 
@@ -892,3 +898,150 @@ def fourier_polcam_recon(img, config='0-45-90-135', show=False):
 
     return(s0, ns1, ns2)
 
+## ===============================================================================================
+def generate_rgbpol_modulation_functions(Nx, Ny, origin='G', config='0-45-90-135', show=False):
+    (mm,nn) = indices((Nx,Ny))
+    mu_x = sqrt(2.0) * cos(0.25 * pi * (2.0*mm - 1.0))
+    mu_y = sqrt(2.0) * cos(0.25 * pi * (2.0*nn - 1.0))
+
+    if (origin == 'R'):
+        mu_r = 0.25 * (1.0 + mu_x) * (1.0 + mu_y)
+        mu_g = 0.5 * (1.0 - mu_x * mu_y)
+        mu_b = 0.25 * (1.0 - mu_x) * (1.0 - mu_y)
+    elif (origin == 'G'):
+        mu_r = 0.25 * (1.0 - mu_x) * (1.0 + mu_y)
+        mu_g = 0.5 * (1.0 + mu_x * mu_y)
+        mu_b = 0.25 * (1.0 + mu_x) * (1.0 - mu_y)
+
+    if (config == '0-45-90-135'):
+        mu_splus = cos(pi * mm)
+        mu_sminus = cos(pi * nn)
+    elif (config == '90-45-0-135'):
+        raise NotImplementedError
+    elif (config == '135-0-45-90'):
+        mu_splus = cos(pi * mm)
+        mu_sminus = cos(pi * nn)
+
+    mu_pol0 = abs(0.5 * (mu_splus + mu_sminus) - 1.0) < 1.0e-7
+    mu_pol90 = abs(0.5 * (mu_splus + mu_sminus) + 1.0) < 1.0e-7
+    mu_pol45 = abs(0.5 * (mu_splus - mu_sminus) - 1.0) < 1.0e-7
+    mu_pol135 = abs(0.5 * (mu_splus - mu_sminus) + 1.0) < 1.0e-7
+
+    mu_r_0 = abs(mu_r * mu_pol0) > 1.0e-7
+    mu_r_45 = abs(mu_r * mu_pol45) > 1.0e-7
+    mu_r_90 = abs(mu_r * mu_pol90) > 1.0e-7
+    mu_r_135 = abs(mu_r * mu_pol135) > 1.0e-7
+
+    mu_g_0 = abs(mu_g * mu_pol0) > 1.0e-7
+    mu_g_45 = abs(mu_g * mu_pol45) > 1.0e-7
+    mu_g_90 = abs(mu_g * mu_pol90) > 1.0e-7
+    mu_g_135 = abs(mu_g * mu_pol135) > 1.0e-7
+
+    mu_b_0 = abs(mu_b * mu_pol0) > 1.0e-7
+    mu_b_45 = abs(mu_b * mu_pol45) > 1.0e-7
+    mu_b_90 = abs(mu_b * mu_pol90) > 1.0e-7
+    mu_b_135 = abs(mu_b * mu_pol135) > 1.0e-7
+
+    all_mu = [mu_r_0, mu_r_45, mu_r_90, mu_r_135, mu_g_0, mu_g_45, mu_g_90, mu_g_135, mu_b_0, mu_b_45, mu_b_90, mu_b_135]
+    other_mu = [mu_r, mu_g, mu_b, mu_splus, mu_sminus, mu_pol0, mu_pol90, mu_pol45, mu_pol135]
+
+    if show:
+        labels = ['mu_r_0', 'mu_r_45', 'mu_r_90', 'mu_r_135', 'mu_g_0', 'mu_g_45', 'mu_g_90', 'mu_g_135',
+                  'mu_b_0', 'mu_b_45', 'mu_b_90', 'mu_b_135']
+
+        for i in range(12):
+            plt.figure(labels[i])
+            plt.imshow(all_mu[i][:16,:16])
+            plt.colorbar()
+
+        mu_rgb = zeros((Nx,Ny,3), 'uint8')
+        mu_rgb[mu_r_0,0] = 0
+        mu_rgb[mu_r_45,0] = 45
+        mu_rgb[mu_r_90,0] = 90
+        mu_rgb[mu_r_135,0] = 135
+        mu_rgb[mu_g_0,1] = 0
+        mu_rgb[mu_g_45,1] = 45
+        mu_rgb[mu_g_90,1] = 90
+        mu_rgb[mu_g_135,1] = 135
+        mu_rgb[mu_b_0,2] = 0
+        mu_rgb[mu_b_45,2] = 45
+        mu_rgb[mu_b_90,2] = 90
+        mu_rgb[mu_b_135,2] = 135
+
+        plt.figure('all_color_mod')
+        plt.imshow(mu_rgb[:16,:16])
+
+    return(all_mu, other_mu)
+
+## ===============================================================================================
+def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1, blurring=1, show=False):
+    dcb = imread('./images/'+filename)[::-1,:,:]    ## flip images to match to image origin='lower'
+    if (binning > 1):
+        dcb = image_binning(dcb)
+
+    ## Make sure that the image size is an even factor of two, for ease of sampling.
+    dcb = evencrop(dcb)
+
+    if blurring > 1:
+        dcb = image_blur(dcb, 'gaussian', blurring, show_image=show)
+
+    if show:
+        plt.figure('original_dcb')
+        plt.imshow(dcb)
+
+    (Nx,Ny,_) = dcb.shape
+    (Px,Py) = (Nx//2, Ny//2)
+    (Mx,My) = (Px//2, Py//2)  ## mask size
+
+    ## all_mu = [mu_r_0, mu_r_45, mu_r_90, mu_r_135, mu_g_0, mu_g_45, mu_g_90, mu_g_135, mu_b_0, mu_b_45, mu_b_90, mu_b_135]
+    (all_mu, other_mu) = generate_rgbpol_modulation_functions(Nx, Ny, origin=origin, show=show)
+
+    if (pol == 'None'):
+        pol0_filter = 0.5
+        pol45_filter = 0.5
+        pol90_filter = 0.5
+        pol135_filter = 0.5
+    elif is_number(pol):
+        pol_angle_radians = float32(pol) * pi / 180.0
+        pol0_filter = cos(pol_angle_radians)**2
+        pol45_filter = cos(pol_angle_radians - pi/4.0)**2
+        pol90_filter = cos(pol_angle_radians - pi/2.0)**2
+        pol135_filter = cos(pol_angle_radians - 3.0*pi/4.0)**2
+    else:
+        raise ValueError(f'pol = "{pol}" is not valid. Only "None" or a number is allowed.')
+
+    R = dcb[:,:,0]
+    G = dcb[:,:,1]
+    B = dcb[:,:,2]
+
+    raw_img = (R * pol0_filter * all_mu[0])
+    raw_img += (R * pol45_filter * all_mu[1])
+    raw_img += (R * pol90_filter * all_mu[2])
+    raw_img += (R * pol135_filter * all_mu[3])
+
+    raw_img += (G * pol0_filter * all_mu[4])
+    raw_img += (G * pol45_filter * all_mu[5])
+    raw_img += (G * pol90_filter * all_mu[6])
+    raw_img += (G * pol135_filter * all_mu[7])
+
+    raw_img += (B * pol0_filter * all_mu[8])
+    raw_img += (B * pol45_filter * all_mu[9])
+    raw_img += (B * pol90_filter * all_mu[10])
+    raw_img += (B * pol135_filter * all_mu[11])
+
+    raw_img = uint8(raw_img)
+
+    if show:
+        plt.figure('simulated raw image rgbpol')
+        plt.imshow(raw_img)
+        plt.colorbar()
+
+        raw_img_colorized = zeros_like(dcb)
+        raw_img_colorized[:,:,0] = raw_img * other_mu[0]
+        raw_img_colorized[:,:,1] = raw_img * other_mu[1]
+        raw_img_colorized[:,:,2] = raw_img * other_mu[2]
+
+        plt.figure('simulated raw image - colorized')
+        plt.imshow(raw_img_colorized)
+
+    return(dcb, raw_img)
