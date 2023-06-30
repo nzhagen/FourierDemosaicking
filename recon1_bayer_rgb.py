@@ -5,13 +5,17 @@ from imageio import imread
 import matplotlib.pyplot as plt
 import filter_array_recon_lib as far
 
+## Use image origin at bottom left.
+import matplotlib as mpl
+mpl.rcParams['image.origin'] = 'lower'
+
 show_mod_figures = False
 show_fourier_figures = True
 binning = 1     ## '1' means no binning
 blurring = 1    ## '1' means no blurring
 origin = ['G', 'R'][0] ## G at (0,0), or R at (0,0)
 filename = ['autumn_tree.jpg', 'spectrum.png', 'PlatycryptusUndatusFemale.jpg'][2]
-img = imread('./images/'+filename)[::-1,:,:]
+img = imread('./images/'+filename)[::-1,:,:]        ## flip up-down to correct for origin at bottomleft
 
 ## Ensure that the image has dimensions with an even number of pixels.
 if (binning > 1):

@@ -659,7 +659,7 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
     c00 = real(ifft2(ifftshift(fft_img * mask)))
     c10 = real(ifft2(ifftshift(roll(fft_img/(1+1j), Mx, axis=0) * mask)))
     c01 = real(ifft2(ifftshift(roll(fft_img/(1+1j), My, axis=1) * mask)))
-    c11 = imag(ifft2(ifftshift(roll(roll(fft_img, My, axis=1), Mx, axis=0) * mask)))
+    c11 = real(ifft2(ifftshift(roll(roll(fft_img/(2.0j), My, axis=1), Mx, axis=0) * mask)))
 
     if (origin == 'R'):     ## red at (0,0)
         G = c00 - 2*c11
@@ -761,4 +761,134 @@ def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring
         plt.imshow(raw_img_rgb)
 
     return(dcb, raw_img)
+
+## ===============================================================================================
+def read_binary_image(filename, Nx=2048, Ny=2448):
+    with open(filename, 'rb') as fileobj:
+        raw = fileobj.read()
+
+    buffersize = len(raw)
+    bytesize = 1
+    img = zeros((Nx,Ny), 'uint16')
+    img_nbytes = Nx * Ny * bytesize
+
+    q = 0
+    xvalues = Nx - 1 - arange(Nx)
+    for x in xvalues:
+        try:
+            row = uint16(struct.unpack(('<'+str(Ny)+'B').encode('ascii'), raw[q:q+(Ny*bytesize)]))
+        except Exception as e:
+            raise ImportError('Cannot decode datacube: ' + repr(e))
+        img[x,:] = row
+        q += Ny * bytesize
+
+    nsat = sum(img == 255)
+    if nsat > 0:
+        print('nsat=', nsat, ' pixels')
+
+    return(img)
+
+## ===========================================================================================
+def naive_polcam_recon(img, config='0-45-90-135'):
+    (Nx,Ny) = img.shape
+    s0 = zeros((Nx//2,Ny//2), 'float32')
+    (Nx_out,Ny_out) = s0.shape
+
+    if (config == '0-45-90-135'):
+        img0 = float32(img[0::2,0::2])
+        img45 = float32(img[0::2,1::2])
+        img90 = float32(img[1::2,1::2])
+        img135 = float32(img[1::2,0::2])
+    elif (config == '90-45-0-135'):
+        img0 = float32(img[1::2,1::2])
+        img45 = float32(img[0::2,1::2])
+        img90 = float32(img[0::2,0::2])
+        img135 = float32(img[1::2,0::2])
+    elif (config == '135-0-45-90'):
+        img0 = float32(img[0::2,1::2])
+        img45 = float32(img[1::2,1::2])
+        img90 = float32(img[1::2,0::2])
+        img135 = float32(img[0::2,0::2])
+
+    if (img0.shape != s0.shape):
+        img0 = img0[:Nx_out,:Ny_out]
+    if (img45.shape != s0.shape):
+        img45 = img45[:Nx_out,:Ny_out]
+    if (img90.shape != s0.shape):
+        img90 = img90[:Nx_out,:Ny_out]
+    if (img135.shape != s0.shape):
+        img135 = img135[:Nx_out,:Ny_out]
+
+    s0 = (img0 + img45 + img90 + img135) / 4.0
+    s1 = 0.5 * (img0 - img90)
+    s2 = 0.5 * (img45 - img135)
+
+    ## Prevent any divide-by-small number problems.
+    if any(s0 < 1.0e-7):
+        okay = (s0 > 1.0e7)
+        ns1 = zeros_like(s0)
+        ns1[okay] = s1[okay] / s0[okay]
+        ns2 = zeros_like(s0)
+        ns2[okay] = s2[okay] / s0[okay]
+    else:
+        ns1 = s1 / s0
+        ns2 = s2 / s0
+
+    return(s0, ns1, ns2)
+
+## ===============================================================================================
+def fourier_polcam_recon(img, config='0-45-90-135', show=False):
+    (Nx,Ny) = img.shape
+    (Px,Py) = (Nx//2, Ny//2)
+    (Mx,My) = (Px//2, Py//2)
+
+    mask = zeros((Nx,Ny),complex)
+    mask[Px-Mx:Px+Mx, Py-My:Py+My] = 1+0j
+
+    fft_img = fftshift(fft2(img))          ## s0 component
+    fft_horiz = roll(fft_img, Py, axis=1)   ## s1+s2 component
+    fft_vert = roll(fft_img, Px, axis=0)    ## s1-s2 component
+
+    C00 = fft_img * mask
+    C10 = fft_horiz * mask
+    C01 = fft_vert * mask
+
+    c_01 = real(ifft2(ifftshift(C01)))
+    c_10 = real(ifft2(ifftshift(C10)))
+
+    s0 = real(ifft2(ifftshift(C00)))
+
+    if (config == '0-45-90-135'):
+        s1 = c_01 - c_10
+        s2 = c_01 + c_10
+    elif (config == '90-45-0-135'):
+        s1 = 0.0
+        s2 = 0.0
+        raise NotImplementedError
+    elif (config == '135-0-45-90'):
+        s1 = c_01 - c_10
+        s2 = -c_01 - c_10
+
+    ## Prevent any divide-by-small number problems.
+    if any(s0 < 1.0e-7):
+        okay = (s0 > 1.0e-7)
+        ns1 = zeros_like(s0)
+        ns1[okay] = s1[okay] / s0[okay]
+        ns2 = zeros_like(s0)
+        ns2[okay] = s2[okay] / s0[okay]
+    else:
+        ns1 = s1 / s0
+        ns2 = s2 / s0
+
+    ## Finally, show the Fourier-domain magnitude image, with circular regions drawn.
+    plt.figure('fft_img')
+    plt.imshow(log(abs(fft_img)), extent=[-1,1,-1,1], vmin=0, vmax=17, aspect='auto')
+    plt.xticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
+    plt.yticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
+    plt.xlabel('x-axis frequencies (Nyquist units)')
+    plt.ylabel('y-axis frequencies (Nyquist units)')
+    plt.colorbar()
+    draw_polcam_fft_circles(Nx, Ny, alpha=0.5)
+
+    return(s0, ns1, ns2)
 
