@@ -7,11 +7,11 @@ import filter_array_recon_lib as far
 ## ============================================================
 ## ============================================================
 
-show_figures = False
+show_figures = True
 blurring = 1        ## "1" means no blurring
 #blurring = 4
 binning = 1
-origin = ['R','G'][1]    ## R at (0,0) or G at (0,0)
+origin = ['G','R'][0]    ## G at (0,0) or R at (0,0)
 
 filename = ['autumn_tree.jpg', 'spectrum.png', 'PlatycryptusUndatusFemale.jpg'][2]
 
@@ -27,13 +27,17 @@ fourier_recon = far.truncate_rgb_float_to_uint8(fourier_recon_float)
 naive_recon_float = far.naive_quadbayer_recon(raw_img, origin, upsample=True)
 naive_recon = far.truncate_rgb_float_to_uint8(naive_recon_float)
 
+## Define box coordinates to draw on the image, to show the zoom region.
+hbox = [zoombox[2],zoombox[3],zoombox[3],zoombox[2],zoombox[2]]
+vbox = [zoombox[0],zoombox[0],zoombox[1],zoombox[1],zoombox[0]]
+
 plt.figure('original_dcb')
 plt.imshow(dcb)
-plt.plot([zoombox[2],zoombox[3],zoombox[3],zoombox[2],zoombox[2]], [zoombox[0],zoombox[0],zoombox[1],zoombox[1],zoombox[0]], '-', color=[0,1,0], lw=3)
+plt.plot(hbox, vbox, '-', color=[0,1,0], lw=3)
 
 plt.figure('fourier_recon_img')
 plt.imshow(fourier_recon)
-plt.plot([zoombox[2],zoombox[3],zoombox[3],zoombox[2],zoombox[2]], [zoombox[0],zoombox[0],zoombox[1],zoombox[1],zoombox[0]], '-', color=[0,1,0], lw=3)
+plt.plot(hbox, vbox, '-', color=[0,1,0], lw=3)
 
 dcb_zoom = dcb[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
 fourier_recon_zoom = fourier_recon[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
