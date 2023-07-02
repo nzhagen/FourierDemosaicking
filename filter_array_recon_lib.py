@@ -387,7 +387,8 @@ def fourier_bayer_recon(raw_img, origin='G', show=False):
     out[:,:,2] = B
 
     if show:
-        f2abs = log(abs(fft_img))
+        ## If we use "f2abs = log(abs(fft_img))" then we may get divide-by-zero warnings. To prevent this, use "where".
+        f2abs = where(abs(fft_img)>0, log(abs(fft_img)), 0)
         plt.figure('log(abs(fft_img))')
         plt.imshow(f2abs, extent=[-1,1,-1,1], vmin=0, vmax=17, aspect='auto')
         plt.xticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
@@ -682,7 +683,8 @@ def fourier_quadbayer_recon(raw_img, origin='G', show=False):
     out[:,:,2] = B
 
     if show:
-        f2abs = log(abs(fft_img))
+        ## If we use "f2abs = log(abs(fft_img))" then we may get divide-by-zero warnings. To prevent this, use "where".
+        f2abs = where(abs(fft_img)>0, log(abs(fft_img)), 0)
 
         plt.figure('log(abs(fft_img))')
         plt.imshow(f2abs, extent=[-1,1,-1,1], aspect='auto')
@@ -985,13 +987,13 @@ def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1,
     if blurring > 1:
         dcb = image_blur(dcb, 'gaussian', blurring, show_image=show)
 
-    if show:
-        plt.figure('original_dcb')
-        plt.imshow(dcb)
-
     (Nx,Ny,_) = dcb.shape
     (Px,Py) = (Nx//2, Ny//2)
     (Mx,My) = (Px//2, Py//2)  ## mask size
+
+    if show:
+        plt.figure('original_dcb')
+        plt.imshow(dcb)
 
     ## all_mu = [mu_r_0, mu_r_45, mu_r_90, mu_r_135, mu_g_0, mu_g_45, mu_g_90, mu_g_135, mu_b_0, mu_b_45, mu_b_90, mu_b_135]
     (all_mu, other_mu) = generate_rgbpol_modulation_functions(Nx, Ny, origin=origin, show=show)
