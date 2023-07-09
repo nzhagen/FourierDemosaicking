@@ -138,7 +138,7 @@ def draw_bayer_fft_circles(Nx,Ny, normalize=False):
     return
 
 ## ============================================================
-def draw_polcam_fft_circles(Nx,Ny, normalize=True, alpha=1.0):
+def draw_monopolcam_fft_circles(Nx,Ny, normalize=True, alpha=1.0):
     (Px,Py) = (Nx//2, Ny//2)
     (Mx,My) = (Px//2, Py//2)
 
@@ -801,7 +801,7 @@ def read_binary_image(filename, Nx=2048, Ny=2448):
     return(img)
 
 ## ===========================================================================================
-def naive_polcam_recon(img, config='0-45-90-135'):
+def naive_monopolcam_recon(img, config='0-45-90-135'):
     (Nx,Ny) = img.shape
     s0 = zeros((Nx//2,Ny//2), 'float32')
     (Nx_out,Ny_out) = s0.shape
@@ -849,7 +849,7 @@ def naive_polcam_recon(img, config='0-45-90-135'):
     return(s0, ns1, ns2)
 
 ## ===============================================================================================
-def fourier_polcam_recon(img, config='0-45-90-135', show=False):
+def fourier_monopolcam_recon(img, config='0-45-90-135', show=False):
     (Nx,Ny) = img.shape
     (Px,Py) = (Nx//2, Ny//2)
     (Mx,My) = (Px//2, Py//2)
@@ -900,7 +900,7 @@ def fourier_polcam_recon(img, config='0-45-90-135', show=False):
     plt.xlabel('x-axis frequencies (Nyquist units)')
     plt.ylabel('y-axis frequencies (Nyquist units)')
     plt.colorbar()
-    draw_polcam_fft_circles(Nx, Ny, alpha=0.5)
+    draw_monopolcam_fft_circles(Nx, Ny, alpha=0.5)
 
     return(s0, ns1, ns2)
 

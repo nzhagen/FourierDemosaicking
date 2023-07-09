@@ -17,8 +17,8 @@ print('(Nx,Ny)=', img.shape)
 config = ['0-45-90-135', '90-45-0-135', '135-0-45-90'][2]
 
 ## Do both a naive reconstruction and a Fourier reconstruction.
-(naive_s0,naive_ns1,naive_ns2) = far.naive_polcam_recon(img, config)
-(fourier_s0,fourier_ns1,fourier_ns2) = far.fourier_polcam_recon(img, config, show=True)
+(naive_s0,naive_ns1,naive_ns2) = far.naive_monopolcam_recon(img, config)
+(fourier_s0,fourier_ns1,fourier_ns2) = far.fourier_monopolcam_recon(img, config, show=True)
 
 ## Show the naive reconstruction.
 gs = gridspec.GridSpec(1,3,width_ratios=[12,12,1])
