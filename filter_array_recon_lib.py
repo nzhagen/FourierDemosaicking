@@ -7,6 +7,10 @@ from scipy.ndimage import gaussian_filter, uniform_filter, zoom
 import matplotlib.pyplot as plt
 import struct
 
+## Use image origin at bottom left.
+import matplotlib as mpl
+mpl.rcParams['image.origin'] = 'lower'
+
 ## ============================================================
 def iseven(x):
     return (x % 2 == 0)
@@ -870,8 +874,8 @@ def fourier_polcam_recon(img, config='0-45-90-135', show=False):
         s1 = c_01 - c_10
         s2 = c_01 + c_10
     elif (config == '90-45-0-135'):
-        s1 = 0.0
-        s2 = 0.0
+        s1 = NaN
+        s2 = NaN
         raise NotImplementedError
     elif (config == '135-0-45-90'):
         s1 = c_01 - c_10
@@ -915,14 +919,16 @@ def generate_rgbpol_modulation_functions(Nx, Ny, origin='G', config='0-45-90-135
         mu_g = 0.5 * (1.0 + mu_x * mu_y)
         mu_b = 0.25 * (1.0 + mu_x) * (1.0 - mu_y)
 
-    if (config == '0-45-90-135'):
+    print('detected config:', config)
+
+    if (config == None) or (config == '0-45-90-135'):
         mu_splus = cos(pi * mm)
         mu_sminus = cos(pi * nn)
     elif (config == '90-45-0-135'):
         raise NotImplementedError
     elif (config == '135-0-45-90'):
-        mu_splus = cos(pi * mm)
-        mu_sminus = cos(pi * nn)
+        mu_splus = -cos(pi * nn)
+        mu_sminus = cos(pi * mm)
 
     mu_pol0 = abs(0.5 * (mu_splus + mu_sminus) - 1.0) < 1.0e-7
     mu_pol90 = abs(0.5 * (mu_splus + mu_sminus) + 1.0) < 1.0e-7
@@ -951,10 +957,10 @@ def generate_rgbpol_modulation_functions(Nx, Ny, origin='G', config='0-45-90-135
         labels = ['mu_r_0', 'mu_r_45', 'mu_r_90', 'mu_r_135', 'mu_g_0', 'mu_g_45', 'mu_g_90', 'mu_g_135',
                   'mu_b_0', 'mu_b_45', 'mu_b_90', 'mu_b_135']
 
-        for i in range(12):
-            plt.figure(labels[i])
-            plt.imshow(all_mu[i][:16,:16])
-            plt.colorbar()
+        #for i in range(12):
+        #    plt.figure(labels[i])
+        #    plt.imshow(all_mu[i][:16,:16])
+        #    plt.colorbar()
 
         mu_rgb = zeros((Nx,Ny,3), 'uint8')
         mu_rgb[mu_r_0,0] = 0
@@ -976,7 +982,7 @@ def generate_rgbpol_modulation_functions(Nx, Ny, origin='G', config='0-45-90-135
     return(all_mu, other_mu)
 
 ## ===============================================================================================
-def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1, blurring=1, show=False):
+def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1, blurring=1, polconfig=None, show=False):
     dcb = imread('./images/'+filename)[::-1,:,:]    ## flip images to match to image origin='lower'
     if (binning > 1):
         dcb = image_binning(dcb)
@@ -995,8 +1001,7 @@ def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1,
         plt.figure('original_dcb')
         plt.imshow(dcb)
 
-    ## all_mu = [mu_r_0, mu_r_45, mu_r_90, mu_r_135, mu_g_0, mu_g_45, mu_g_90, mu_g_135, mu_b_0, mu_b_45, mu_b_90, mu_b_135]
-    (all_mu, other_mu) = generate_rgbpol_modulation_functions(Nx, Ny, origin=origin, show=show)
+    (all_mu, other_mu) = generate_rgbpol_modulation_functions(Nx, Ny, origin=origin, config=polconfig, show=show)
 
     if (pol == 'None'):
         pol0_filter = 0.5
