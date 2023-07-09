@@ -353,19 +353,20 @@ def generate_sampled_image_from_datacube(dcb, sampling_functions, zoom_region=No
     return(uint8(sampled_img))
 
 ## ============================================================
-def fourier_bayer_recon(raw_img, origin='G', show=False):
+def fourier_bayer_recon(raw_img, origin='G', masktype='rect', show=False):
     ## Use the Fourier shift-and-mask approach to reconstructing the Bayer-sampled image.
 
     fft_img = fftshift(fft2(raw_img))
     (Nx,Ny) = fft_img.shape
     print('Nx,Ny=', Nx, Ny)
 
-    mask = zeros((Nx,Ny), 'bool')
+    #mask = zeros((Nx,Ny), 'bool')
+    mask = create_mask_function(Nx, Ny, Nx//2, Ny//2, masktype=masktype, show=False)
 
     (Px,Py) = (Nx//2, Ny//2)
-    (Mx,My) = (Px//2, Py//2)
-    print(f'(Nx,Ny) = ({Nx},{Ny}),  (Px,Py) = ({Px},{Py}),  (Mx,My) = ({Mx},{My})')
-    mask[Px-Mx:Px+Mx, Py-My:Py+My] = True
+    #(Mx,My) = (Px//2, Py//2)
+    #print(f'(Nx,Ny) = ({Nx},{Ny}),  (Px,Py) = ({Px},{Py}),  (Mx,My) = ({Mx},{My})')
+    #mask[Px-Mx:Px+Mx, Py-My:Py+My] = True
 
     ## Here is the Fourier reconstruction code. We shift the Fourier-domain image, mask it, then inverse transform.
     ## Finally, we combine the channels to reconstruct individual color channels from the luminance and chrominance
@@ -1052,3 +1053,41 @@ def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1,
         plt.imshow(raw_img_colorized)
 
     return(dcb, raw_img)
+
+## ===============================================================================================
+def create_mask_function(Nx, Ny, Mx, My, masktype, show=False):
+    (Px,Py) = (Nx//2, Ny//2)
+    mask = zeros((Nx,Ny), 'float32')
+
+    if (masktype == 'rect'):
+        mask[Px-(Mx//2):Px+(Mx//2), Py-(My//2):Py+(My//2)] = 1.0
+        return(mask)
+    elif (masktype == 'hanning'):
+        wx = hanning(Mx)
+        wy = hanning(My)
+    elif (masktype == 'hamming'):
+        wx = hamming(Mx)
+        wy = hamming(My)
+    elif (masktype == 'blackman'):
+        wx = blackman(Mx)
+        wy = blackman(My)
+    elif (masktype == 'supergauss'):
+        from scipy import signal
+        wx = signal.general_gaussian(Mx, p=3.0, sig=Mx/2.9)
+        wy = signal.general_gaussian(My, p=3.0, sig=My/2.9)
+
+    window2d = outer(wx,wy)
+    mask[Px-(Mx//2):Px+(Mx//2), Py-(My//2):Py+(My//2)] = window2d
+
+    if show:
+        plt.figure('window_function_1d')
+        plt.plot(linspace(-(Mx//2),+(Mx//2)-1,Mx), wx)
+        plt.plot(linspace(-(My//2),+(My//2)-1,My), wy)
+
+        (xx,yy) = indices((Nx,Ny))
+        plt.figure('window_function_2d')
+        ax = plt.axes(projection='3d')
+        ax.plot_wireframe(xx, yy, mask, lw=0.75)
+
+    return(mask)
+

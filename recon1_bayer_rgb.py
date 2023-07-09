@@ -14,6 +14,8 @@ show_fourier_figures = True
 binning = 1     ## '1' means no binning
 blurring = 1    ## '1' means no blurring
 origin = ['G', 'R'][0] ## G at (0,0), or R at (0,0)
+window_function = ['rect','hanning','hamming','blackman','supergauss'][4]
+
 filename = ['autumn_tree.jpg', 'spectrum.png', 'PlatycryptusUndatusFemale.jpg'][2]
 img = imread('./images/'+filename)[::-1,:,:]        ## flip up-down to correct for origin at bottomleft
 
@@ -39,7 +41,7 @@ plt.axis('off')
 
 mu_funcs = far.generate_bayer_modulation_functions(Nx, Ny, origin, show=show_mod_figures)
 raw_img = far.generate_sampled_image_from_datacube(img, mu_funcs, zoom_region=zoombox, show=True)
-fourier_recon_float = far.fourier_bayer_recon(raw_img, show=show_fourier_figures)
+fourier_recon_float = far.fourier_bayer_recon(raw_img, masktype=window_function, show=show_fourier_figures)
 fourier_recon = far.truncate_rgb_float_to_uint8(fourier_recon_float)
 naive_recon_float = far.naive_bayer_recon(raw_img, origin=origin, upsample=True)
 naive_recon = far.truncate_rgb_float_to_uint8(naive_recon_float)
