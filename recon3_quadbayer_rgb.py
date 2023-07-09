@@ -12,6 +12,7 @@ blurring = 1        ## "1" means no blurring
 #blurring = 4
 binning = 1
 origin = ['G','R'][0]    ## G at (0,0) or R at (0,0)
+window_function = ['rect','hanning','hamming','blackman','supergauss'][4]
 
 filename = ['autumn_tree.jpg', 'spectrum.png', 'PlatycryptusUndatusFemale.jpg'][2]
 
@@ -22,7 +23,7 @@ if (binning > 1):
     zoombox = array(zoombox) // binning
 
 (dcb,raw_img) = far.simulate_quadbayer_rawimg_from_dcb(filename, origin, binning, blurring, show=show_figures)
-fourier_recon_float = far.fourier_quadbayer_recon(raw_img, origin, show=show_figures)
+fourier_recon_float = far.fourier_quadbayer_recon(raw_img, origin, masktype=window_function, show=show_figures)
 fourier_recon = far.truncate_rgb_float_to_uint8(fourier_recon_float)
 naive_recon_float = far.naive_quadbayer_recon(raw_img, origin, upsample=True)
 naive_recon = far.truncate_rgb_float_to_uint8(naive_recon_float)

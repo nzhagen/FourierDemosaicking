@@ -657,7 +657,9 @@ def fourier_quadbayer_recon(raw_img, origin='G', masktype='rect', show=False):
     fft_img = fftshift(fft2(raw_img))
 
     (Nx,Ny) = raw_img.shape
-    mask = create_mask_function(Nx, Ny, Mx, My, masktype=masktype)
+    (Px,Py) = (Nx//2, Ny//2)
+    (Mx,My) = (Px//2, Py//2)
+    mask = create_mask_function(Nx, Ny, Nx//4, Ny//4, masktype=masktype)
 
     c00 = real(ifft2(ifftshift(fft_img * mask)))
     c10 = real(ifft2(ifftshift(roll(fft_img/(1+1j), Mx, axis=0) * mask)))
@@ -844,10 +846,6 @@ def naive_monopol_recon(img, config='0-45-90-135'):
 def fourier_monopol_recon(img, config='0-45-90-135', masktype='rect', show=False):
     (Nx,Ny) = img.shape
     (Px,Py) = (Nx//2, Ny//2)
-    #(Mx,My) = (Px//2, Py//2)
-
-    #mask = zeros((Nx,Ny),complex)
-    #mask[Px-Mx:Px+Mx, Py-My:Py+My] = 1+0j
     mask = create_mask_function(Nx, Ny, Nx//2, Ny//2, masktype=masktype, show=False)
 
     fft_img = fftshift(fft2(img))          ## s0 component
