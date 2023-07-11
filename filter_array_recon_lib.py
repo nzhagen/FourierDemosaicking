@@ -795,7 +795,7 @@ def read_binary_image(filename, Nx=2048, Ny=2448):
     return(img)
 
 ## ===========================================================================================
-def naive_monopol_recon(img, config='0-45-90-135'):
+def naive_monopol_recon(img, config='0-45-90-135', upsample=False):
     (Nx,Ny) = img.shape
     s0 = zeros((Nx//2,Ny//2), 'float32')
     (Nx_out,Ny_out) = s0.shape
@@ -839,6 +839,13 @@ def naive_monopol_recon(img, config='0-45-90-135'):
     else:
         ns1 = s1 / s0
         ns2 = s2 / s0
+
+    ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
+    ## If we then upsample by a factor of two, then we can recover the original image size.
+    if upsample:
+        s0 = zoom(s0, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        ns1 = zoom(ns1, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        ns2 = zoom(ns2, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
 
     return(s0, ns1, ns2)
 
