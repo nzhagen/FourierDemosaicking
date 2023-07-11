@@ -830,8 +830,8 @@ def naive_monopol_recon(img, config='0-45-90-135', upsample=False):
     s2 = 0.5 * (img45 - img135)
 
     ## Prevent any divide-by-small number problems.
-    if any(s0 < 1.0e-7):
-        okay = (s0 > 1.0e7)
+    if any(s0 < 1.0e-5):
+        okay = (s0 >= 1.0e-5)
         ns1 = zeros_like(s0)
         ns1[okay] = s1[okay] / s0[okay]
         ns2 = zeros_like(s0)
@@ -1087,4 +1087,20 @@ def create_mask_function(Nx, Ny, Mx, My, masktype, show=False):
         ax.plot_wireframe(xx, yy, mask, lw=0.75)
 
     return(mask)
+
+## ===========================================================================================
+def naive_rgbpol_recon(img, origin='G', config='0-45-90-135', upsample=False):
+    (all_s0, all_ns1, all_ns2) = far.naive_monopol_recon(img, config=config, upsample=False)
+    rgb_s0 = far.naive_bayer_recon(all_s0, origin=origin, upsample=False)
+    rgb_ns1 = far.naive_bayer_recon(all_ns1, origin=origin, upsample=False)
+    rgb_ns2 = far.naive_bayer_recon(all_ns2, origin=origin, upsample=False)
+
+    ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
+    ## If we then upsample by a factor of two, then we can recover the original image size.
+    if upsample:
+        rgb_s0 = zoom(rgb_s0, (4,4,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        rgb_ns1 = zoom(rgb_ns1, (4,4,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        rgb_ns2 = zoom(rgb_ns2, (4,4,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+
+    return(rgb_s0, rgb_ns1, rgb_ns2)
 

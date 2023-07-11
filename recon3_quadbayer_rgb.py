@@ -22,7 +22,7 @@ if simulate:
         zoombox = array(zoombox) // binning
     (dcb,raw_img) = far.simulate_quadbayer_rawimg_from_dcb(filename, origin, binning, blurring, show=show_figures)
 else:
-    raw_img = imread('./images/roadway_rgbpol.tif') // 16       ## convert 12-bit to 8-bit
+    raw_img = imread('./images/roadway_rgbpol.tif') // 16       ## divide by 16 to convert 12-bit to 8-bit
     dcb = False
     zoombox = [1272,1422,577,727]
 

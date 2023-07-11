@@ -10,7 +10,7 @@ mpl.rcParams['image.origin'] = 'lower'
 
 window_function = ['rect','hanning','hamming','blackman','supergauss'][4]
 
-filename = './images/buildings_and_sky.tif'
+filename = './images/buildings_and_sky_rgbpol.tif'
 img = imread(filename)[::-1,:]      ## flip up-down to correct for origin at bottomleft
 (Nx,Ny) = img.shape
 print('(Nx,Ny)=', img.shape)
