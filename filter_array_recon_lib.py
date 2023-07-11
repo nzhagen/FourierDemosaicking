@@ -829,16 +829,7 @@ def naive_monopol_recon(img, config='0-45-90-135', upsample=False):
     s1 = 0.5 * (img0 - img90)
     s2 = 0.5 * (img45 - img135)
 
-    ## Prevent any divide-by-small number problems.
-    if any(s0 < 1.0e-5):
-        okay = (s0 >= 1.0e-5)
-        ns1 = zeros_like(s0)
-        ns1[okay] = s1[okay] / s0[okay]
-        ns2 = zeros_like(s0)
-        ns2[okay] = s2[okay] / s0[okay]
-    else:
-        ns1 = s1 / s0
-        ns2 = s2 / s0
+    (ns1, ns2) = calc_normstokes(s0, s1, s2)
 
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
@@ -879,16 +870,7 @@ def fourier_monopol_recon(img, config='0-45-90-135', masktype='rect', show=False
         s1 = c_01 - c_10
         s2 = -c_01 - c_10
 
-    ## Prevent any divide-by-small number problems.
-    if any(s0 < 1.0e-7):
-        okay = (s0 > 1.0e-7)
-        ns1 = zeros_like(s0)
-        ns1[okay] = s1[okay] / s0[okay]
-        ns2 = zeros_like(s0)
-        ns2[okay] = s2[okay] / s0[okay]
-    else:
-        ns1 = s1 / s0
-        ns2 = s2 / s0
+    (ns1, ns2) = calc_normstokes(s0, s1, s2)
 
     ## Finally, show the Fourier-domain magnitude image, with circular regions drawn.
     plt.figure('fft_img')
@@ -1090,10 +1072,11 @@ def create_mask_function(Nx, Ny, Mx, My, masktype, show=False):
 
 ## ===========================================================================================
 def naive_rgbpol_recon(img, origin='G', config='0-45-90-135', upsample=False):
-    (all_s0, all_ns1, all_ns2) = far.naive_monopol_recon(img, config=config, upsample=False)
-    rgb_s0 = far.naive_bayer_recon(all_s0, origin=origin, upsample=False)
-    rgb_ns1 = far.naive_bayer_recon(all_ns1, origin=origin, upsample=False)
-    rgb_ns2 = far.naive_bayer_recon(all_ns2, origin=origin, upsample=False)
+    (all_s0, all_ns1, all_ns2) = naive_monopol_recon(img, config=config, upsample=False)
+    all_s0 *= 2
+    rgb_s0 = naive_bayer_recon(all_s0, origin=origin, upsample=False)
+    rgb_ns1 = naive_bayer_recon(all_ns1, origin=origin, upsample=False)
+    rgb_ns2 = naive_bayer_recon(all_ns2, origin=origin, upsample=False)
 
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
@@ -1103,4 +1086,18 @@ def naive_rgbpol_recon(img, origin='G', config='0-45-90-135', upsample=False):
         rgb_ns2 = zoom(rgb_ns2, (4,4,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
 
     return(rgb_s0, rgb_ns1, rgb_ns2)
+
+## ===========================================================================================
+def calc_normstokes(s0, s1, s2):
+    if any(s0 < 1.0e-7):
+        okay = (s0 > 1.0e-7)
+        ns1 = zeros_like(s0)
+        ns1[okay] = s1[okay] / s0[okay]
+        ns2 = zeros_like(s0)
+        ns2[okay] = s2[okay] / s0[okay]
+    else:
+        ns1 = s1 / s0
+        ns2 = s2 / s0
+
+    return(ns1, ns2)
 
