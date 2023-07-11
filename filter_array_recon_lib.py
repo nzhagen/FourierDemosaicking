@@ -1101,3 +1101,124 @@ def calc_normstokes(s0, s1, s2):
 
     return(ns1, ns2)
 
+## ===========================================================================================
+def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect', show=False):
+    (Nx,Ny) = img.shape
+    (Px,Py) = (Nx//2, Ny//2)
+    (Mx,My) = (Px//2, Py//2)  ## mask size
+    #print(f'(Nx,Ny) = ({Nx},{Ny}),  (Px,Py) = ({Px},{Py}),  (Mx,My) = ({Mx},{My})')
+
+    f2 = fftshift(fft2(img))
+
+    if show:
+        f2abs = where(abs(f2)>0, log(abs(f2)), 0)
+        plt.figure('log(abs(fft_img))')
+        plt.imshow(f2abs, extent=[-1,1,-1,1])
+        plt.xticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
+        plt.yticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
+        plt.colorbar()
+
+    mask = create_mask_function(Nx, Ny, Nx//4, Ny//4, masktype)
+
+    c00 = ifft2(ifftshift(f2 * mask))
+    c10 = ifft2(ifftshift(roll(f2, -Mx, axis=0) * mask))
+    cm10 = ifft2(ifftshift(roll(f2, Mx, axis=0) * mask))
+    c01 = ifft2(ifftshift(roll(f2, -My, axis=1) * mask))
+    c0m1 = ifft2(ifftshift(roll(f2, My, axis=1) * mask))
+    c02 = ifft2(ifftshift(roll(f2, -Py, axis=1) * mask))
+    c20 = ifft2(ifftshift(roll(f2, Px, axis=0) * mask))
+    c11 = ifft2(ifftshift(roll(roll(f2, -Mx, axis=0), -My, axis=1) * mask))
+    cm1m1 = ifft2(ifftshift(roll(roll(f2, Mx, axis=0), My, axis=1) * mask))
+    c1m1 = ifft2(ifftshift(roll(roll(f2, -Mx, axis=0), My, axis=1) * mask))
+    cm11 = ifft2(ifftshift(roll(roll(f2, Mx, axis=0), -My, axis=1) * mask))
+    c12 = ifft2(ifftshift(roll(roll(f2, -Mx, axis=0), -Py, axis=1) * mask))
+    cm12 = ifft2(ifftshift(roll(roll(f2, Mx, axis=0), -Py, axis=1) * mask))
+    c21 = ifft2(ifftshift(roll(roll(f2, -Px, axis=0), -My, axis=1) * mask))
+    c2m1 = ifft2(ifftshift(roll(roll(f2, -Px, axis=0), My, axis=1) * mask))
+
+    ## If you want to see the intermediate reconstruction chrominances...
+    if False:
+        Us0 = 4 * real(c00)
+        Usp = 4 * real(c20)
+        Usm = 4 * real(c02)
+        Vs0 = 2 * real(-1j*c11 - c1m1 - cm11 + 1j*cm1m1)
+        Vsp = 2 * real(-c11 + 1j*c1m1 - 1j*cm11 - cm1m1)
+        Vsm = 2 * real(-c11 - 1j*c1m1 + 1j*cm11 - cm1m1)
+        Ws0 = real((1+1j)*c01 + (1-1j)*c0m1 - (1+1j)*c10 - (1-1j)*cm10)
+        Wsp = real((-1+1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10)
+        Wsm = real((1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
+
+        Rs0 = (Us0 + Vs0 + 2*Ws0) / 2
+        Gs0 = (Us0 - Vs0) / 2
+        Bs0 = (Us0 + Vs0 - 2*Ws0) / 2
+
+        Rsp = (Usp + Vsp + 2*Wsp) / 2
+        Gsp = (Usp - Vsp) / 2
+        Bsp = (Usp + Vsp - 2*Wsp) / 2
+
+        Rsm = (Usm + Vsm + 2*Wsm) / 2
+        Gsm = (Usm - Vsm) / 2
+        Bsm = (Usm + Vsm - 2*Wsm) / 2
+
+        if (config == '0-45-90-135'):
+            Rs1 = 0.5 * (Rsp + Rsm)
+            Rs2 = 0.5 * (Rsp - Rsm)
+            Gs1 = 0.5 * (Gsp + Gsm)
+            Gs2 = 0.5 * (Gsp - Gsm)
+            Bs1 = 0.5 * (Bsp + Bsm)
+            Bs2 = 0.5 * (Bsp - Bsm)
+        elif (config == '135-0-45-90'):
+            Rs1 = 0.5 * (Rsp - Rsm)
+            Rs2 = -0.5 * (Rsp + Rsm)
+            Gs1 = 0.5 * (Gsp - Gsm)
+            Gs2 = -0.5 * (Gsp + Gsm)
+            Bs1 = 0.5 * (Bsp - Bsm)
+            Bs2 = -0.5 * (Bsp + Bsm)
+
+    if (config == '0-45-90-135'):
+        raise NotImplementedError
+    elif (config == '135-0-45-90'):
+        Rs0 = real(2*c00 - (1+1j)*c10 - c1m1 - (1-1j)*cm10 - cm11 + 1j*cm1m1 - 1j*c11 + (1-1j)*c0m1 + (1+1j)*c01)
+        #Rsp = real(2*c20 - c11 + 1j*c1m1 - 1j*cm11 - cm1m1 - (1-1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10)
+        #Rsm = real(2*c02 - c11 - 1j*c1m1 + 1j*cm11 - cm1m1 + (1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
+        Rs1 = 0.5 * real(2*c20 - 2*c02 + 2j*c1m1 - 2j*cm11 - (1-1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10
+                         - (1-1j)*c01 - (1+1j)*c0m1 + (1+1j)*c12 + (1-1j)*cm12)
+        Rs2 = 0.5 * real(-2*c20 - 2*c02 + 2*c11 + 2*cm1m1 + (1-1j)*c10 - (1+1j)*c21 - (1-1j)*c2m1 + (1+1j)*cm10
+                         - (1-1j)*c01 - (1+1j)*c0m1 + (1+1j)*c12 + (1-1j)*cm12)
+
+        Gs0 = real((2 * c00) + 1j*c11 + c1m1 + cm11 - 1j*cm1m1)
+        #Gsp = real((2 * c20) + c11 - (1j * c1m1) + (1j * cm11) + cm1m1)
+        #Gsm = real((2 * c02) + c11 + (1j * c1m1) - (1j * cm11) + cm1m1)
+        Gs1 = real(c20 - c02 - 1j*c1m1 + 1j*cm11)
+        Gs2 = real(-c20 - c02 - c11 - cm1m1)
+
+        Bs0 = real(2*c00 - 1j*c11 - c1m1 - cm11 + 1j*cm1m1 - (1+1j)*c01 - (1-1j)*c0m1 + (1+1j)*c10 + (1-1j)*cm10)
+        #Bsp = real(2*c20 - c11 + 1j*c1m1 - 1j*cm11 - cm1m1 + (1-1j)*c10 - (1+1j)*c21 - (1-1j)*c2m1 + (1+1j)*cm10)
+        #Bsm = real(2*c02 - c11 - 1j*c1m1 + 1j*cm11 - cm1m1 - (1-1j)*c01 - (1+1j)*c0m1 + (1+1j)*c12 + (1-1j)*cm12)
+        Bs1 = 0.5 * real(2*c20 - 2*c02 + 2j*c1m1 - 2j*cm11 + (1-1j)*c10 - (1+1j)*c21 - (1-1j)*c2m1 + (1+1j)*cm10
+                         + (1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
+        Bs2 = 0.5 * real(-2*c20 - 2*c02 + 2*c11 + 2*cm1m1 - (1-1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10
+                         + (1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
+
+    ## Prevent any divide-by-small number problems.
+    (Rns1,Rns2) = calc_normstokes(Rs0, Rs1, Rs2)
+    (Gns1,Gns2) = calc_normstokes(Gs0, Gs1, Gs2)
+    (Bns1,Bns2) = calc_normstokes(Bs0, Bs1, Bs2)
+
+    (Nx,Ny) = Rs0.shape
+    rgb_s0 = zeros((Nx,Ny,3), 'float32')
+    rgb_s0[:,:,0] = Rs0
+    rgb_s0[:,:,1] = Gs0
+    rgb_s0[:,:,2] = Bs0
+
+    rgb_ns1 = zeros((Nx,Ny,3), 'float32')
+    rgb_ns1[:,:,0] = Rns1
+    rgb_ns1[:,:,1] = Gns1
+    rgb_ns1[:,:,2] = Bns1
+
+    rgb_ns2 = zeros((Nx,Ny,3), 'float32')
+    rgb_ns2[:,:,0] = Rns2
+    rgb_ns2[:,:,1] = Gns2
+    rgb_ns2[:,:,2] = Bns2
+
+    return(rgb_s0, rgb_ns1, rgb_ns2)
