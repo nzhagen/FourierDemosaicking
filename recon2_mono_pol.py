@@ -4,10 +4,6 @@ from imageio import imread
 import matplotlib.gridspec as gridspec
 import filter_array_recon_lib as far
 
-## Use image origin at bottom left.
-import matplotlib as mpl
-mpl.rcParams['image.origin'] = 'lower'
-
 window_function = ['rect','hanning','hamming','blackman','supergauss'][4]
 
 filename = './images/buildings_and_sky_rgbpol.tif'

@@ -79,11 +79,11 @@ def draw_bayer_fft_circles(Nx,Ny, normalize=False):
         cen9 = ( 1,-1)
     else:
         radius = Px-Mx
-        cen1 = ((Nx-1)/2.0, (Ny-1)/2.0)
-        cen2 = (Nx-1, (Ny-1)/2.0)
-        cen3 = (0.0, (Ny-1)/2.0)
-        cen4 = ((Nx-1)/2.0, 0.0)
-        cen5 = ((Nx-1)/2.0, (Ny-1))
+        cen1 = ((Nx-1)/2, (Ny-1)/2)
+        cen2 = (Nx-1, (Ny-1)/2)
+        cen3 = (0.0, (Ny-1)/2)
+        cen4 = ((Nx-1)/2, 0.0)
+        cen5 = ((Nx-1)/2, (Ny-1))
         cen6 = ((Nx-1), (Ny-1))
         cen7 = (0.0, 0.0)
         cen8 = (0.0, (Ny-1))
@@ -485,54 +485,25 @@ def draw_quadbayer_fft_circles(Nx, Ny, normalize=False):
         cen9 = ( 0.5,-0.5)
     else:
         ## Plot the circles in a frequency domain of inverse pixel units
-        radius = (Px-Mx) / 2.0
-        cen1 = ((Nx-1)/2.0, (Ny-1)/2.0) / 2.0
-        cen2 = (Nx-1, (Ny-1)/2.0) / 2.0
-        cen3 = (0.0, (Ny-1)/2.0) / 2.0
-        cen4 = ((Nx-1)/2.0, 0.0) / 2.0
-        cen5 = ((Nx-1)/2.0, (Ny-1)) / 2.0
-        cen6 = ((Nx-1), (Ny-1)) / 2.0
+        radius = (Px-Mx) / 2
+        cen1 = ((Nx-1)/4, (Ny-1)/4)
+        cen2 = ((Nx-1)/2, (Ny-1)/4)
+        cen3 = (0.0, (Ny-1)/4)
+        cen4 = ((Nx-1)/4, 0.0)
+        cen5 = ((Nx-1)/4, (Ny-1)/2)
+        cen6 = ((Nx-1)/2, (Ny-1)/2)
         cen7 = (0.0, 0.0)
-        cen8 = (0.0, (Ny-1)) / 2.0
-        cen9 = ((Nx-1), 0.0) / 2.0
+        cen8 = (0.0, (Ny-1)/2)
+        cen9 = ((Nx-1)/2, 0.0)
 
+    centers = [cen1, cen2, cen3, cen4, cen5, cen6, cen7, cen8, cen9]
     thetas = linspace(0.0, 2.0*pi, 200)
-    x1 = cen1[1] + radius * cos(thetas)
-    y1 = cen1[0] + radius * sin(thetas)
+    colors = ['k','b','b','r','r','g','g','g','g']
 
-    x2 = cen2[1] + radius * cos(thetas)
-    y2 = cen2[0] + radius * sin(thetas)
-
-    x3 = cen3[1] + radius * cos(thetas)
-    y3 = cen3[0] + radius * sin(thetas)
-
-    x4 = cen4[1] + radius * cos(thetas)
-    y4 = cen4[0] + radius * sin(thetas)
-
-    x5 = cen5[1] + radius * cos(thetas)
-    y5 = cen5[0] + radius * sin(thetas)
-
-    x6 = cen6[1] + radius * cos(thetas)
-    y6 = cen6[0] + radius * sin(thetas)
-
-    x7 = cen7[1] + radius * cos(thetas)
-    y7 = cen7[0] + radius * sin(thetas)
-
-    x8 = cen8[1] + radius * cos(thetas)
-    y8 = cen8[0] + radius * sin(thetas)
-
-    x9 = cen9[1] + radius * cos(thetas)
-    y9 = cen9[0] + radius * sin(thetas)
-
-    plt.plot(x1, y1, 'k-', lw=3)
-    plt.plot(x2, y2, 'b-', lw=3)
-    plt.plot(x3, y3, 'b-', lw=3)
-    plt.plot(x4, y4, 'r-', lw=3)
-    plt.plot(x5, y5, 'r-', lw=3)
-    plt.plot(x6, y6, 'g-', lw=3)
-    plt.plot(x7, y7, 'g-', lw=3)
-    plt.plot(x8, y8, 'g-', lw=3)
-    plt.plot(x9, y9, 'g-', lw=3)
+    for i in range(len(centers)):
+        xcircle = centers[i][1] + radius * cos(thetas)
+        ycircle = centers[i][0] + radius * sin(thetas)
+        plt.plot(xcircle, ycircle, '-', color=colors[i], lw=3)
 
     return
 
@@ -1222,3 +1193,4 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
     rgb_ns2[:,:,2] = Bns2
 
     return(rgb_s0, rgb_ns1, rgb_ns2)
+
