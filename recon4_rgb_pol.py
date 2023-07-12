@@ -119,7 +119,7 @@ def show_color_recon(figname, img, zoombox=None):
 ## =================================================================================================
 
 if (__name__ == '__main__'):
-    simulate = False
+    simulate = True
     polconfig = '135-0-45-90'
     window_function = ['rect','hanning','hamming','blackman','supergauss'][1]
 
@@ -152,7 +152,7 @@ if (__name__ == '__main__'):
     if zoombox:
         plt.plot(hbox, vbox, 'g-', lw=3)
 
-    (rgb_s0, rgb_ns1, rgb_ns2) = far.fourier_rgbpol_recon(img, origin=origin, config=polconfig, masktype=window_function, show=False)
+    (rgb_s0, rgb_ns1, rgb_ns2) = far.fourier_rgbpol_recon(img, origin=origin, config=polconfig, masktype=window_function, show=True)
     show_polarization_recon('fourier', rgb_ns1, rgb_ns2)
 
     factor = 2**8 / 2**bit_depth    ## reduce bit-depth to fit into 8-bit display

@@ -1084,10 +1084,13 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
     if show:
         f2abs = where(abs(f2)>0, log(abs(f2)), 0)
         plt.figure('log(abs(fft_img))')
-        plt.imshow(f2abs, extent=[-1,1,-1,1])
+        plt.imshow(f2abs, extent=[-1,1,-1,1], aspect='auto')
         plt.xticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
         plt.yticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
+        draw_rgbpol_fft_circles()
         plt.colorbar()
+        plt.xlabel('x-axis frequencies (Nyquist units)')
+        plt.ylabel('y-axis frequencies (Nyquist units)')
 
     mask = create_mask_function(Nx, Ny, Nx//4, Ny//4, masktype)
 
@@ -1193,4 +1196,73 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
     rgb_ns2[:,:,2] = Bns2
 
     return(rgb_s0, rgb_ns1, rgb_ns2)
+
+## ============================================================
+def draw_rgbpol_fft_circles():
+    ## Plot the circles in a frequency domain of Nyquist units
+    radius = 0.25
+    c00   = [   0,   0]
+    c10   = [ 0.5,   0]
+    cm10  = [-0.5,   0]
+    c01   = [   0, 0.5]
+    c0m1  = [   0,-0.5]
+    c11   = [ 0.5, 0.5]
+    cm1m1 = [-0.5,-0.5]
+    cm11  = [-0.5, 0.5]
+    c1m1  = [ 0.5,-0.5]
+    c20   = [   1,   0]
+    c21   = [   1, 0.5]
+    c2m1  = [   1,-0.5]
+    cm20  = [  -1,   0]
+    cm21  = [  -1, 0.5]
+    cm2m1 = [  -1,-0.5]
+    c02   = [   0,   1]
+    c12   = [ 0.5,   1]
+    cm12  = [-0.5,   1]
+    c0m2  = [   0,  -1]
+    c1m2  = [ 0.5,  -1]
+    cm1m2 = [-0.5,  -1]
+
+    centers1 = [c00,c10,cm10,c01,c0m1,c11,cm1m1,cm11,c1m1]
+    centers2 = [c20,c21,c2m1]
+    centers3 = [cm20,cm21,cm2m1]
+    centers4 = [c02,c12,cm12]
+    centers5 = [c0m2,c1m2,cm1m2]
+
+    thetas = linspace(0.0, 2.0*pi, 200)
+
+    for i in range(len(centers1)):
+        xcircle = centers1[i][1] + radius * cos(thetas)
+        ycircle = centers1[i][0] + radius * sin(thetas)
+        plt.plot(xcircle, ycircle, 'm-', lw=3)
+
+    thetas = linspace(pi, 2.0*pi, 200)
+
+    for i in range(len(centers2)):
+        xcircle = centers2[i][1] + radius * cos(thetas)
+        ycircle = centers2[i][0] + radius * sin(thetas)
+        plt.plot(xcircle, ycircle, 'b-', lw=3)
+
+    thetas = linspace(0.0, pi, 200)
+
+    for i in range(len(centers3)):
+        xcircle = centers3[i][1] + radius * cos(thetas)
+        ycircle = centers3[i][0] + radius * sin(thetas)
+        plt.plot(xcircle, ycircle, 'b-', lw=3)
+
+    thetas = linspace(pi/2.0, 3.0*pi/2.0, 200)
+
+    for i in range(len(centers4)):
+        xcircle = centers4[i][1] + radius * cos(thetas)
+        ycircle = centers4[i][0] + radius * sin(thetas)
+        plt.plot(xcircle, ycircle, 'r-', lw=3)
+
+    thetas = linspace(-pi/2.0, pi/2.0, 200)
+
+    for i in range(len(centers5)):
+        xcircle = centers5[i][1] + radius * cos(thetas)
+        ycircle = centers5[i][0] + radius * sin(thetas)
+        plt.plot(xcircle, ycircle, 'r-', lw=3)
+
+    return
 
