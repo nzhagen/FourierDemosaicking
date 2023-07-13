@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from imageio import imread
 from numpy.fft import fft2, ifft2, fftshift, ifftshift, fftfreq
-from scipy.ndimage import gaussian_filter, uniform_filter, zoom
+from scipy.ndimage import gaussian_filter, uniform_filter
+from skimage.transform import resize
 import matplotlib.pyplot as plt
 import struct
 
@@ -278,7 +279,7 @@ def naive_bayer_recon(raw_img, origin='G', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        out = zoom(out, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        out = resize(out, (Nx,Ny,3))
 
     return(out)
 
@@ -618,7 +619,7 @@ def naive_quadbayer_recon(raw_img, origin='G', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        out = zoom(out, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        out = resize(out, (Nx,Ny,3))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
 
     return(out)
 
@@ -805,9 +806,9 @@ def naive_monopol_recon(img, config='0-45-90-135', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        s0 = zoom(s0, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
-        ns1 = zoom(ns1, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
-        ns2 = zoom(ns2, (2,2,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        s0 = resize(s0, (Nx,Ny))
+        ns1 = resize(ns1, (Nx,Ny))
+        ns2 = resize(ns2, (Nx,Ny))
 
     return(s0, ns1, ns2)
 
@@ -1043,6 +1044,7 @@ def create_mask_function(Nx, Ny, Mx, My, masktype, show=False):
 
 ## ===========================================================================================
 def naive_rgbpol_recon(img, origin='G', config='0-45-90-135', upsample=False):
+    (Nx,Ny) = img.shape
     (all_s0, all_ns1, all_ns2) = naive_monopol_recon(img, config=config, upsample=False)
     all_s0 *= 2
     rgb_s0 = naive_bayer_recon(all_s0, origin=origin, upsample=False)
@@ -1052,9 +1054,9 @@ def naive_rgbpol_recon(img, origin='G', config='0-45-90-135', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        rgb_s0 = zoom(rgb_s0, (4,4,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
-        rgb_ns1 = zoom(rgb_ns1, (4,4,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
-        rgb_ns2 = zoom(rgb_ns2, (4,4,1))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        rgb_s0 = resize(rgb_s0, (Nx,Ny,3))
+        rgb_ns1 = resize(rgb_ns1, (Nx,Ny,3))
+        rgb_ns2 = resize(rgb_ns2, (Nx,Ny,3))
 
     return(rgb_s0, rgb_ns1, rgb_ns2)
 
