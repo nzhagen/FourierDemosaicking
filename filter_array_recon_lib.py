@@ -423,8 +423,14 @@ def fourier_bayer_recon(raw_img, origin='G', masktype='rect', show=False):
         plt.legend()
 
         plt.figure('fourier_domain_mask')
-        plt.imshow(mask)
-        plt.colorbar()
+        ax = plt.axes(projection='3d')
+        (xx,yy) = float32(indices((Nx,Ny)))
+        xx -= Nx / 2
+        yy -= Ny / 2
+        xx /= Nx / 2
+        yy /= Ny / 2
+        ax.plot_wireframe(xx, yy, mask, lw=0.75)
+        ax.set_zlim((0.0,1.0))
 
     return(out)
 

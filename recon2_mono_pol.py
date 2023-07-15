@@ -18,6 +18,16 @@ config = ['0-45-90-135', '90-45-0-135', '135-0-45-90'][2]
 (naive_s0,naive_ns1,naive_ns2) = far.naive_monopol_recon(img, config)
 (fourier_s0,fourier_ns1,fourier_ns2) = far.fourier_monopol_recon(img, config, masktype=window_function, show=True)
 
+plt.figure('naive_s0')
+plt.imshow(naive_s0)
+plt.colorbar()
+plt.axis('off')
+
+plt.figure('fourier_s0')
+plt.imshow(fourier_s0)
+plt.colorbar()
+plt.axis('off')
+
 ## Show the naive reconstruction.
 gs = gridspec.GridSpec(1,3,width_ratios=[12,12,1])
 fig1 = plt.figure('naive_recon', figsize=(18,6))
