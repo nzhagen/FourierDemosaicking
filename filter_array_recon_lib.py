@@ -1052,7 +1052,6 @@ def create_mask_function(Nx, Ny, Mx, My, masktype, show=False):
 def naive_rgbpol_recon(img, origin='G', config='0-45-90-135', upsample=False):
     (Nx,Ny) = img.shape
     (all_s0, all_ns1, all_ns2) = naive_monopol_recon(img, config=config, upsample=False)
-    all_s0 *= 2
     rgb_s0 = naive_bayer_recon(all_s0, origin=origin, upsample=False)
     rgb_ns1 = naive_bayer_recon(all_ns1, origin=origin, upsample=False)
     rgb_ns2 = naive_bayer_recon(all_ns2, origin=origin, upsample=False)
@@ -1160,26 +1159,26 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
     if (config == '0-45-90-135'):
         raise NotImplementedError
     elif (config == '135-0-45-90'):
-        Rs0 = real(2*c00 - (1+1j)*c10 - c1m1 - (1-1j)*cm10 - cm11 + 1j*cm1m1 - 1j*c11 + (1-1j)*c0m1 + (1+1j)*c01)
+        Rs0 = 0.5 * real(2*c00 - (1+1j)*c10 - c1m1 - (1-1j)*cm10 - cm11 + 1j*cm1m1 - 1j*c11 + (1-1j)*c0m1 + (1+1j)*c01)
         #Rsp = real(2*c20 - c11 + 1j*c1m1 - 1j*cm11 - cm1m1 - (1-1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10)
         #Rsm = real(2*c02 - c11 - 1j*c1m1 + 1j*cm11 - cm1m1 + (1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
-        Rs1 = 0.5 * real(2*c20 - 2*c02 + 2j*c1m1 - 2j*cm11 - (1-1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10
+        Rs1 = 0.25 * real(2*c20 - 2*c02 + 2j*c1m1 - 2j*cm11 - (1-1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10
                          - (1-1j)*c01 - (1+1j)*c0m1 + (1+1j)*c12 + (1-1j)*cm12)
-        Rs2 = 0.5 * real(-2*c20 - 2*c02 + 2*c11 + 2*cm1m1 + (1-1j)*c10 - (1+1j)*c21 - (1-1j)*c2m1 + (1+1j)*cm10
+        Rs2 = 0.25 * real(-2*c20 - 2*c02 + 2*c11 + 2*cm1m1 + (1-1j)*c10 - (1+1j)*c21 - (1-1j)*c2m1 + (1+1j)*cm10
                          - (1-1j)*c01 - (1+1j)*c0m1 + (1+1j)*c12 + (1-1j)*cm12)
 
-        Gs0 = real((2 * c00) + 1j*c11 + c1m1 + cm11 - 1j*cm1m1)
+        Gs0 = 0.5 * real((2 * c00) + 1j*c11 + c1m1 + cm11 - 1j*cm1m1)
         #Gsp = real((2 * c20) + c11 - (1j * c1m1) + (1j * cm11) + cm1m1)
         #Gsm = real((2 * c02) + c11 + (1j * c1m1) - (1j * cm11) + cm1m1)
-        Gs1 = real(c20 - c02 - 1j*c1m1 + 1j*cm11)
-        Gs2 = real(-c20 - c02 - c11 - cm1m1)
+        Gs1 = 0.5 * real(c20 - c02 - 1j*c1m1 + 1j*cm11)
+        Gs2 = 0.5 * real(-c20 - c02 - c11 - cm1m1)
 
-        Bs0 = real(2*c00 - 1j*c11 - c1m1 - cm11 + 1j*cm1m1 - (1+1j)*c01 - (1-1j)*c0m1 + (1+1j)*c10 + (1-1j)*cm10)
+        Bs0 = 0.5 * real(2*c00 - 1j*c11 - c1m1 - cm11 + 1j*cm1m1 - (1+1j)*c01 - (1-1j)*c0m1 + (1+1j)*c10 + (1-1j)*cm10)
         #Bsp = real(2*c20 - c11 + 1j*c1m1 - 1j*cm11 - cm1m1 + (1-1j)*c10 - (1+1j)*c21 - (1-1j)*c2m1 + (1+1j)*cm10)
         #Bsm = real(2*c02 - c11 - 1j*c1m1 + 1j*cm11 - cm1m1 - (1-1j)*c01 - (1+1j)*c0m1 + (1+1j)*c12 + (1-1j)*cm12)
-        Bs1 = 0.5 * real(2*c20 - 2*c02 + 2j*c1m1 - 2j*cm11 + (1-1j)*c10 - (1+1j)*c21 - (1-1j)*c2m1 + (1+1j)*cm10
+        Bs1 = 0.25 * real(2*c20 - 2*c02 + 2j*c1m1 - 2j*cm11 + (1-1j)*c10 - (1+1j)*c21 - (1-1j)*c2m1 + (1+1j)*cm10
                          + (1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
-        Bs2 = 0.5 * real(-2*c20 - 2*c02 + 2*c11 + 2*cm1m1 - (1-1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10
+        Bs2 = 0.25 * real(-2*c20 - 2*c02 + 2*c11 + 2*cm1m1 - (1-1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10
                          + (1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
 
     ## Prevent any divide-by-small number problems.
