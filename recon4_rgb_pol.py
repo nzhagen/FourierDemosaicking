@@ -94,7 +94,7 @@ def show_color_recon(figname, img, zoombox=None):
     plt.figure(figname)
     plt.imshow(img)
 
-    if zoombox is not None:
+    if (zoombox is not None) and zoombox:
         plt.figure(figname)
         plt.plot(hbox, vbox, 'g-', lw=3)
 
@@ -113,6 +113,7 @@ if (__name__ == '__main__'):
     simulate = False
     polconfig = '135-0-45-90'
     window_function = ['rect','hanning','hamming','blackman','supergauss'][1]
+    save_figures = False
 
     if simulate:
         blurring = 1        ## "1" means no blurring
@@ -127,10 +128,12 @@ if (__name__ == '__main__'):
         if (binning > 1):
             zoombox = array(zoombox) // binning
     else:
-        img = imread('/home/nh/repos/FourierDemosaicking/images/roadway_rgbpol.tif')
-        bit_depth = 13
-        #zoombox = [1276,1424,572,720]
-        zoombox = [1276-200,1424+200,572-200,720+200]
+        #img = imread('./images/roadway_rgbpol.tif')
+        #bit_depth = 13
+        img = far.read_binary_image('./images/colorchart.bin')
+        bit_depth = 8
+        #zoombox = [1276-200,1424+200,572-200,720+200]
+        zoombox = False
         origin = 'G'
 
     if zoombox:
@@ -145,7 +148,6 @@ if (__name__ == '__main__'):
         plt.plot(hbox, vbox, 'g-', lw=3)
 
     (rgb_s0, rgb_ns1, rgb_ns2) = far.fourier_rgbpol_recon(img, origin=origin, config=polconfig, masktype=window_function, show=True)
-    #show_polarization_recon('fourier', rgb_s0, rgb_ns1, rgb_ns2)
 
     if zoombox:
         fourier_s0_zoom = rgb_s0[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
@@ -167,6 +169,11 @@ if (__name__ == '__main__'):
         naive_s0_zoom = naive_rgb_s0[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
         naive_ns1_zoom = naive_rgb_ns1[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
         naive_ns2_zoom = naive_rgb_ns2[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
-        show_polarization_recon('naive', naive_s0_zoom, naive_ns1_zoom, naive_ns2_zoom)
+        show_polarization_recon('naive', naive_s0_zoom, naive_ns1_zoom, naive_ns2_zoom)     ## zoomed image
+
+    if save_figures:
+        ## Loop over all currently open figures and save them.
+        for label in plt.get_figlabels():
+            plt.figure(label).savefig(f'./{label}.pdf')
 
     plt.show()
