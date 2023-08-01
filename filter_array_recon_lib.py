@@ -232,16 +232,6 @@ def evencrop(input_img, verbose=False):
     return(img)
 
 ## ============================================================
-def augment_img_colordiff(img1, img2):
-    ## Calculate the difference between two color images, and amplify the color differences to make them easy to see.
-
-    diff = zeros(img1.shape, 'float32')
-    diff = float32(img1) - float32(img2)
-    diff -= amin(diff)
-    diff = 255.0 * diff / amax(diff)
-    return(uint8(diff))
-
-## ============================================================
 def naive_bayer_recon(raw_img, origin='G', upsample=False):
     ## From a Bayer-sampled raw image, map every other pixel into the output registered color image (i.e. datacube).
     ## This will produce an image that is half the size of the original. However, if choosing "upsample=True", then
@@ -435,7 +425,7 @@ def fourier_bayer_recon(raw_img, origin='G', masktype='rect', show=False):
     return(out)
 
 ## ===============================================================================================
-def read_sony_image(filename):
+def read_sony_binary_image(filename):
     with open(filename, 'rb') as fileobj:
         raw = fileobj.read()
 
@@ -1188,9 +1178,9 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
 
     (Nx,Ny) = Rs0.shape
     rgb_s0 = zeros((Nx,Ny,3), 'float32')
-    rgb_s0[:,:,0] = Rs0
+    rgb_s0[:,:,0] = Rs0 #* sqrt(2)
     rgb_s0[:,:,1] = Gs0
-    rgb_s0[:,:,2] = Bs0
+    rgb_s0[:,:,2] = Bs0 #* sqrt(2)
 
     rgb_ns1 = zeros((Nx,Ny,3), 'float32')
     rgb_ns1[:,:,0] = Rns1
@@ -1201,6 +1191,32 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
     rgb_ns2[:,:,0] = Rns2
     rgb_ns2[:,:,1] = Gns2
     rgb_ns2[:,:,2] = Bns2
+
+    if show:
+        maxval = amax(rgb_s0)
+
+        for i,c in enumerate(['R','G','B']):
+            for p in ['s0','ns1','ns2']:
+                plt.figure(c+p, figsize=(4,3))
+                plt.title(c+p)
+                if (p == 's0'):
+                    plt.imshow(eval(c+p), vmin=0, vmax=maxval, cmap='gray')
+                    plt.axis('off')
+                    plt.colorbar()
+                else:
+                    plt.imshow(eval(c+p), vmin=-1, vmax=1, cmap='seismic')
+                    plt.axis('off')
+                    cbar = plt.colorbar()
+                    cbar.set_ticks([-1.0,-0.5,0,0.5,1.0])
+
+            alpha = 0.5 * rad2deg(arctan2(rgb_ns2[:,:,i], rgb_ns1[:,:,i]))
+            figname = c+'_AOLP'
+            plt.figure(figname, figsize=(4,3))
+            plt.title(figname)
+            plt.imshow(alpha, vmin=-90, vmax=90, cmap='hsv')
+            plt.axis('off')
+            cbar = plt.colorbar()
+            cbar.set_ticks([-90,-45,0,45,90])
 
     return(rgb_s0, rgb_ns1, rgb_ns2)
 
