@@ -363,13 +363,13 @@ def fourier_bayer_recon(raw_img, origin='G', masktype='rect', show=False):
     c11 = real(ifft2(ifftshift(roll(roll(fft_img, -Py, axis=1), -Px, axis=0) * mask)))
 
     if (origin == 'R'):     ## red at (0,0)
+        R = c00 + c11 + c01 - c10
         G = c00 - c11
-        R = c00 + c11 + 2.0 * c01
-        B = c00 + c11 - 2.0 * c10
+        B = c00 + c11 - c01 + c10
     elif (origin == 'G'):   ## green at (0,0)
+        R = c00 - c11 - c01 + c10
         G = c00 + c11
-        R = c00 - c11 - 2.0 * c01
-        B = c00 - c11 - 2.0 * c10
+        B = c00 - c11 + c01 - c10
 
     ## Finally, insert the three color planes into a single integrated color image (i.e. "datacube").
     out = zeros((Nx,Ny,3), 'float32')
