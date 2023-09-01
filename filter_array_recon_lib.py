@@ -269,7 +269,7 @@ def naive_bayer_recon(raw_img, origin='G', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        out = resize(out, (Nx,Ny,3))
+        out = resize(out, (Nx,Ny,3), preserve_range=True)
 
     return(out)
 
@@ -615,7 +615,7 @@ def naive_quadbayer_recon(raw_img, origin='G', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        out = resize(out, (Nx,Ny,3))    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
+        out = resize(out, (Nx,Ny,3), preserve_range=True)    ## this can break with odd-number dimension sizes ... what function allows noninteger dimension scaling?
 
     return(out)
 
@@ -802,9 +802,9 @@ def naive_monopol_recon(img, config='0-45-90-135', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        s0 = resize(s0, (Nx,Ny))
-        ns1 = resize(ns1, (Nx,Ny))
-        ns2 = resize(ns2, (Nx,Ny))
+        s0 = resize(s0, (Nx,Ny), preserve_range=True)
+        ns1 = resize(ns1, (Nx,Ny), preserve_range=True)
+        ns2 = resize(ns2, (Nx,Ny), preserve_range=True)
 
     return(s0, ns1, ns2)
 
@@ -1049,9 +1049,9 @@ def naive_rgbpol_recon(img, origin='G', config='0-45-90-135', upsample=False):
     ## Naive-sampling will naturally lead to having half as many pixels as the original image had.
     ## If we then upsample by a factor of two, then we can recover the original image size.
     if upsample:
-        rgb_s0 = resize(rgb_s0, (Nx,Ny,3))
-        rgb_ns1 = resize(rgb_ns1, (Nx,Ny,3))
-        rgb_ns2 = resize(rgb_ns2, (Nx,Ny,3))
+        rgb_s0 = resize(rgb_s0, (Nx,Ny,3), preserve_range=True)
+        rgb_ns1 = resize(rgb_ns1, (Nx,Ny,3), preserve_range=True)
+        rgb_ns2 = resize(rgb_ns2, (Nx,Ny,3), preserve_range=True)
 
     return(rgb_s0, rgb_ns1, rgb_ns2)
 
