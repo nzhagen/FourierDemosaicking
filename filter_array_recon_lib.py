@@ -632,16 +632,16 @@ def fourier_quadbayer_recon(raw_img, origin='G', masktype='rect', show=False):
     c00 = real(ifft2(ifftshift(fft_img * mask)))
     c10 = real(ifft2(ifftshift(roll(fft_img/(1+1j), Mx, axis=0) * mask)))
     c01 = real(ifft2(ifftshift(roll(fft_img/(1+1j), My, axis=1) * mask)))
-    c11 = real(ifft2(ifftshift(roll(roll(fft_img/(2.0j), My, axis=1), Mx, axis=0) * mask)))
+    c11 = real(ifft2(ifftshift(roll(roll(fft_img/(1.0j), My, axis=1), Mx, axis=0) * mask)))
 
     if (origin == 'R'):     ## red at (0,0)
-        G = c00 - 2*c11
-        R = c00 + 2*c11 + 2*c10 + 2*c01
-        B = c00 + 2*c11 - 2*c10 - 2*c01
+        G = c00 - c11
+        R = c00 + c11 + 2*c10 + 2*c01
+        B = c00 + c11 - 2*c10 - 2*c01
     elif (origin == 'G'):   ## green at (0,0)
-        G = c00 + 2*c11
-        R = c00 - 2*c11 - 2*c10 + 2*c01
-        B = c00 - 2*c11 + 2*c10 - 2*c01
+        G = c00 + c11
+        R = c00 - c11 - 2*c10 + 2*c01
+        B = c00 - c11 + 2*c10 - 2*c01
 
     out = zeros((Nx,Ny,3), 'float32')
     out[:,:,0] = R
