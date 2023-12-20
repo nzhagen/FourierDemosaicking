@@ -8,7 +8,7 @@ import filter_array_recon_lib as far
 ## ============================================================
 
 show_figures = True
-blurring = 1        ## "1" means no blurring
+blurring = 0        ## "0" means no blurring
 #blurring = 4
 binning = 1
 origin = ['G','R'][0]    ## G at (0,0) or R at (0,0)

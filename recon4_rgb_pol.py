@@ -116,7 +116,7 @@ if (__name__ == '__main__'):
     save_figures = False
 
     if simulate:
-        blurring = 1        ## "1" means no blurring
+        blurring = 0        ## "1" means no blurring
         #blurring = 4
         binning = 1
         origin = ['G','R'][0]    ## G at (0,0) or R at (0,0)
@@ -163,7 +163,7 @@ if (__name__ == '__main__'):
     #naive_rgb_s0_uint8 = far.truncate_rgb_float_to_uint8(naive_rgb_s0*factor)
 
     #show_polarization_recon('naive', naive_rgb_s0, naive_rgb_ns1, naive_rgb_ns2)
-    show_color_recon('naive s0', naive_rgb_s0, zoombox)
+    show_color_recon('naive s0', uint8(naive_rgb_s0), zoombox)
 
     if zoombox:
         naive_s0_zoom = naive_rgb_s0[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]

@@ -702,7 +702,7 @@ def fourier_quadbayer_recon(raw_img, origin='G', masktype='rect', show=False):
     return(out)
 
 ## ============================================================
-def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring=1, show=False):
+def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring=0, show=False):
     dcb = imread('./images/'+filename)[::-1,:,:]    ## flip images to match to image origin='lower'
     if (binning > 1):
         dcb = image_binning(dcb)
@@ -710,7 +710,7 @@ def simulate_quadbayer_rawimg_from_dcb(filename, origin='G', binning=1, blurring
     ## Make sure that the image size is an even factor of two, for ease of sampling.
     dcb = evencrop(dcb)
 
-    if blurring > 1:
+    if (blurring > 0):
         dcb = image_blur(dcb, 'gaussian', blurring, show_image=show)
 
     (Nx,Ny,_) = dcb.shape
@@ -930,7 +930,7 @@ def generate_rgbpol_modulation_functions(Nx, Ny, origin='G', config='0-45-90-135
     return(all_mu, other_mu)
 
 ## ===============================================================================================
-def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1, blurring=1, polconfig=None, show=False):
+def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1, blurring=0, polconfig=None, show=False):
     dcb = imread('./images/'+filename)[::-1,:,:]    ## flip images to match to image origin='lower'
     if (binning > 1):
         dcb = image_binning(dcb)
@@ -938,7 +938,7 @@ def simulate_rgbpol_rawimg_from_dcb(filename, pol='None', origin='G', binning=1,
     ## Make sure that the image size is an even factor of two, for ease of sampling.
     dcb = evencrop(dcb)
 
-    if blurring > 1:
+    if (blurring > 0):
         dcb = image_blur(dcb, 'gaussian', blurring, show_image=show)
 
     (Nx,Ny,_) = dcb.shape
@@ -1109,27 +1109,27 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
 
     ## If you want to see the intermediate reconstruction chrominances...
     if False:
-        Us0 = 4 * real(c00)
-        Usp = 4 * real(c20)
-        Usm = 4 * real(c02)
-        Vs0 = 2 * real(-1j*c11 - c1m1 - cm11 + 1j*cm1m1)
-        Vsp = 2 * real(-c11 + 1j*c1m1 - 1j*cm11 - cm1m1)
-        Vsm = 2 * real(-c11 - 1j*c1m1 + 1j*cm11 - cm1m1)
-        Ws0 = real((1+1j)*c01 + (1-1j)*c0m1 - (1+1j)*c10 - (1-1j)*cm10)
-        Wsp = real((-1+1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10)
-        Wsm = real((1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
+        Ws0 = 4 * real(c00)
+        Wsp = 4 * real(c20)
+        Wsm = 4 * real(c02)
+        Us0 = 2 * real(-1j*c11 - c1m1 - cm11 + 1j*cm1m1)
+        Usp = 2 * real(-c11 + 1j*c1m1 - 1j*cm11 - cm1m1)
+        Usm = 2 * real(-c11 - 1j*c1m1 + 1j*cm11 - cm1m1)
+        Vs0 = real((1+1j)*c01 + (1-1j)*c0m1 - (1+1j)*c10 - (1-1j)*cm10)
+        Vsp = real((-1+1j)*c10 + (1+1j)*c21 + (1-1j)*c2m1 - (1+1j)*cm10)
+        Vsm = real((1-1j)*c01 + (1+1j)*c0m1 - (1+1j)*c12 - (1-1j)*cm12)
 
-        Rs0 = (Us0 + Vs0 + 2*Ws0) / 2
-        Gs0 = (Us0 - Vs0) / 2
-        Bs0 = (Us0 + Vs0 - 2*Ws0) / 2
+        Rs0 = (Ws0 + Us0 + 2*Vs0) / 2
+        Gs0 = (Ws0 - Us0) / 2
+        Bs0 = (Ws0 + Us0 - 2*Vs0) / 2
 
-        Rsp = (Usp + Vsp + 2*Wsp) / 2
-        Gsp = (Usp - Vsp) / 2
-        Bsp = (Usp + Vsp - 2*Wsp) / 2
+        Rsp = (Wsp + Usp + 2*Vsp) / 2
+        Gsp = (Wsp - Usp) / 2
+        Bsp = (Wsp + Usp - 2*Vsp) / 2
 
-        Rsm = (Usm + Vsm + 2*Wsm) / 2
-        Gsm = (Usm - Vsm) / 2
-        Bsm = (Usm + Vsm - 2*Wsm) / 2
+        Rsm = (Wsm + Usm + 2*Vsm) / 2
+        Gsm = (Wsm - Usm) / 2
+        Bsm = (Wsm + Usm - 2*Vsm) / 2
 
         if (config == '0-45-90-135'):
             Rs1 = 0.5 * (Rsp + Rsm)
@@ -1178,9 +1178,9 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
 
     (Nx,Ny) = Rs0.shape
     rgb_s0 = zeros((Nx,Ny,3), 'float32')
-    rgb_s0[:,:,0] = Rs0 #* sqrt(2)
+    rgb_s0[:,:,0] = Rs0 * sqrt(2.0)
     rgb_s0[:,:,1] = Gs0
-    rgb_s0[:,:,2] = Bs0 #* sqrt(2)
+    rgb_s0[:,:,2] = Bs0 * sqrt(2.0)
 
     rgb_ns1 = zeros((Nx,Ny,3), 'float32')
     rgb_ns1[:,:,0] = Rns1

@@ -12,7 +12,7 @@ mpl.rcParams['image.origin'] = 'lower'
 show_mod_figures = False
 show_fourier_figures = True
 binning = 1     ## '1' means no binning
-blurring = 1    ## '1' means no blurring
+blurring = 0    ## '0' means no blurring
 origin = ['G', 'R'][0] ## G at (0,0), or R at (0,0)
 window_function = ['rect','hanning','hamming','blackman','supergauss'][4]
 
