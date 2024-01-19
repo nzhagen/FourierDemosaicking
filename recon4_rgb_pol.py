@@ -153,11 +153,12 @@ if (__name__ == '__main__'):
         fourier_s0_zoom = rgb_s0[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
         fourier_ns1_zoom = rgb_ns1[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
         fourier_ns2_zoom = rgb_ns2[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
-        show_polarization_recon('fourier', fourier_s0_zoom, fourier_ns1_zoom, fourier_ns2_zoom)
+        show_polarization_recon('fourier', fourier_s0_zoom, fourier_ns1_zoom, fourier_ns2_zoom)     ## zoomed image
 
     factor = 2**8 / 2**bit_depth    ## reduce bit-depth to fit into 8-bit display
     rgb_s0_uint8 = far.truncate_rgb_float_to_uint8(rgb_s0*factor)
     show_color_recon('fourier s0', rgb_s0_uint8, zoombox)
+    plt.show()
 
     (naive_rgb_s0, naive_rgb_ns1, naive_rgb_ns2) = far.naive_rgbpol_recon(img, origin=origin, config=polconfig, upsample=True)
     #naive_rgb_s0_uint8 = far.truncate_rgb_float_to_uint8(naive_rgb_s0*factor)
