@@ -13,10 +13,10 @@ blurring = 0        ## "0" means no blurring
 binning = 1
 origin = ['G','R'][0]    ## G at (0,0) or R at (0,0)
 window_function = ['rect','hanning','hamming','blackman','supergauss'][4]
-simulate = False
+simulate = True
 
 if simulate:
-    filename = ['autumn_tree.jpg', 'spectrum.png', 'PlatycryptusUndatusFemale.jpg'][2]
+    filename = ['autumn_tree.jpg', 'spectrum.png', 'PlatycryptusUndatusFemale.jpg'][0]
     zoombox = [880,1080,1280,1480]     ## (xlo,xhi,ylo,yhi] PlatycryptusUndatusFemale.jpg
     if (binning > 1):
         zoombox = array(zoombox) // binning
@@ -36,7 +36,7 @@ if zoombox:
     hbox = [zoombox[2],zoombox[3],zoombox[3],zoombox[2],zoombox[2]]
     vbox = [zoombox[0],zoombox[0],zoombox[1],zoombox[1],zoombox[0]]
 
-if dcb:
+if any(dcb):
     plt.figure('original_dcb')
     plt.imshow(dcb)
     if zoombox:
@@ -54,7 +54,7 @@ if zoombox:
     plt.imshow(fourier_recon_zoom)
     plt.axis('off')
 
-    if dcb:
+    if any(dcb):
         dcb_zoom = dcb[zoombox[0]:zoombox[1],zoombox[2]:zoombox[3],:]
         fourier_diff_quant = sum(float32(fourier_recon_zoom) - float32(dcb_zoom), axis=2)
         plt.figure('fourier_diff_quant_zoom')
@@ -70,7 +70,7 @@ if zoombox:
     plt.imshow(naive_recon_zoom)
     plt.axis('off')
 
-    if dcb:
+    if any(dcb):
         naive_diff_quant = sum(float32(naive_recon_zoom) - float32(dcb_zoom), axis=2)
         plt.figure('naive_diff_quant_zoom')
         plt.imshow(naive_diff_quant)
