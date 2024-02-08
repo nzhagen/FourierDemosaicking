@@ -378,9 +378,9 @@ def fourier_bayer_recon(raw_img, origin='G', masktype='rect', show=False):
     out[:,:,2] = B
 
     if show:
-        ## If we use "f2abs = log(abs(fft_img))" then we may get divide-by-zero warnings. To prevent this, use "where".
-        f2abs = where(abs(fft_img)>0, log(abs(fft_img)), 0)
-        plt.figure('log(abs(fft_img))')
+        ## If we use "f2abs = log1p(abs(fft_img))" then we may get divide-by-zero warnings. To prevent this, use "where".
+        f2abs = log1p(abs(fft_img))
+        plt.figure('log1p(abs(fft_img))')
         plt.imshow(f2abs, extent=[-1,1,-1,1], vmin=0, vmax=17, aspect='auto')
         plt.xticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
         plt.yticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
@@ -404,7 +404,7 @@ def fourier_bayer_recon(raw_img, origin='G', masktype='rect', show=False):
         diag_dist = r[diagonal_line_mask]
         diag_dist[arange(Ndiag) < (Ndiag/2)] *= -1.0
 
-        plt.figure('log(abs(fft_img))_cross-section')
+        plt.figure('abs(fft_img)_cross-section')
         plt.plot(arange(Ny)-(Ny/2), f2abs[Nx//2,:], alpha=0.75, label='horiz slice')
         plt.plot(arange(Nx)-(Nx/2), f2abs[:,Ny//2], alpha=0.75, label='vert slice')
         plt.plot(diag_dist, f2abs[diagonal_line_mask], alpha=0.75, label='diag slice')
@@ -649,10 +649,10 @@ def fourier_quadbayer_recon(raw_img, origin='G', masktype='rect', show=False):
     out[:,:,2] = B
 
     if show:
-        ## If we use "f2abs = log(abs(fft_img))" then we may get divide-by-zero warnings. To prevent this, use "where".
-        f2abs = where(abs(fft_img)>0, log(abs(fft_img)), 0)
+        ## If we use "f2abs = log1p(abs(fft_img))" then we may get divide-by-zero warnings. To prevent this, use "where".
+        f2abs = log1p(abs(fft_img))
 
-        plt.figure('log(abs(fft_img))')
+        plt.figure('log1p(abs(fft_img))')
         plt.imshow(f2abs, extent=[-1,1,-1,1], aspect='auto')
         plt.xlabel('x-axis frequencies (Nyquist units)')
         plt.ylabel('y-axis frequencies (Nyquist units)')
@@ -675,19 +675,19 @@ def fourier_quadbayer_recon(raw_img, origin='G', masktype='rect', show=False):
         diag_dist = r[diagonal_line_mask]
         diag_dist[arange(Ndiag) < (Ndiag/2)] *= -1.0
 
-        #plt.figure('log(abs(c00))')
-        #plt.imshow(log(abs(fft_img)))
+        #plt.figure('log1p(abs(c00))')
+        #plt.imshow(log1p(abs(fft_img)))
         #plt.colorbar()
 
-        #plt.figure('log(abs(c01))')
-        #plt.imshow(log(abs(roll(fft_img, -Mx, axis=0))))
+        #plt.figure('log1p(abs(c01))')
+        #plt.imshow(log1p(abs(roll(fft_img, -Mx, axis=0))))
         #plt.colorbar()
 
-        #plt.figure('log(abs(c10))')
-        #plt.imshow(log(abs(roll(fft_img, -My, axis=1))))
+        #plt.figure('log1p(abs(c10))')
+        #plt.imshow(log1p(abs(roll(fft_img, -My, axis=1))))
         #plt.colorbar()
 
-        plt.figure('log(abs(fft_img))_cross-section')
+        plt.figure('log1p(abs(fft_img))_cross-section')
         plt.plot(arange(Ny)-(Ny/2), f2abs[Nx//2,:], 'r-', alpha=0.75, label='horiz slice')
         plt.plot(arange(Nx)-(Nx/2), f2abs[:,Ny//2], 'b-', alpha=0.75, label='vert slice')
         plt.plot(diag_dist, f2abs[diagonal_line_mask], 'g-', alpha=0.75, label='diag slice')
@@ -841,8 +841,8 @@ def fourier_monopol_recon(img, config='0-45-90-135', masktype='rect', show=False
     (ns1, ns2) = calc_normstokes(s0, s1, s2)
 
     ## Finally, show the Fourier-domain magnitude image, with circular regions drawn.
-    plt.figure('fft_img')
-    plt.imshow(log(abs(fft_img)), extent=[-1,1,-1,1], vmin=0, vmax=17, aspect='auto')
+    plt.figure('log1p(fft_img)')
+    plt.imshow(log1p(abs(fft_img)), extent=[-1,1,-1,1], vmin=0, vmax=17, aspect='auto')
     plt.xticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
     plt.yticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
     plt.xlabel('x-axis frequencies (Nyquist units)')
@@ -1079,8 +1079,8 @@ def fourier_rgbpol_recon(img, origin='G', config='0-45-90-135', masktype='rect',
     f2 = fftshift(fft2(img))
 
     if show:
-        f2abs = where(abs(f2)>0, log(abs(f2)), 0)
-        plt.figure('log(abs(fft_img))')
+        f2abs = log1p(abs(f2))
+        plt.figure('log1p(abs(fft_img))')
         plt.imshow(f2abs, extent=[-1,1,-1,1], aspect='auto')
         plt.xticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
         plt.yticks([-1,-0.5,0,0.5,1], ['-1','-1/2','0','1/2','1'])
